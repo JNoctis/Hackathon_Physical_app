@@ -5,6 +5,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 import json
 import click # Import click for custom commands
+from flask_cors import CORS
 
 # cd \Hackathon_Physical_app\physicalbackend
 # set FLASK_APP=server.py
@@ -13,6 +14,7 @@ import click # Import click for custom commands
 
 # Initialize Flask app
 app = Flask(__name__)
+CORS(app)
 
 # Database Configuration
 # Use PostgreSQL for production, SQLite for development for simplicity
@@ -111,10 +113,10 @@ def add_activity():
     # For simplicity, we'll assume user_id is provided in the request body for now.
     # You'd likely get this from a JWT or session.
     user_id = data.get('user_id')
-
+    
     if not user_id or not User.query.get(user_id):
         return jsonify({'message': 'User not found or not authenticated'}), 404
-
+    
     # Validate required fields
     required_fields = ['start_time', 'duration_seconds', 'distance_km', 'average_pace_seconds_per_km']
     for field in required_fields:

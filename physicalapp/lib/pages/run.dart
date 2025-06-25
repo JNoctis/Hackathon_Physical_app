@@ -141,6 +141,24 @@ class _RunPageState extends State<RunPage> {
     });
   }
 
+  Future<void> sendRunDataToBackend(Map<String, Object> runData) async {
+    final url = Uri.parse('http://127.0.0.1:5000/activities'); // 換成你的後端網址
+    final jsonString = jsonEncode(runData);
+    print(jsonString);
+
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonString,
+    );
+
+    if (response.statusCode == 201) {
+      print('success');
+    } else {
+      print('fail: ${response.statusCode}');
+    }
+  }
+
   void _stopTracking() {
     _positionStream?.cancel();
     _timer?.cancel();
@@ -152,15 +170,19 @@ class _RunPageState extends State<RunPage> {
     final dateStr = '${today.year}/${today.month.toString().padLeft(2, '0')}/${today.day.toString().padLeft(2, '0')}';
 
     final runData = {
-      'date': dateStr,
-      'distance': _totalDistance / 1000,
-      'time': _activeDuration.inSeconds,
-      'avg_speed': _totalDistance > 0 ? (_activeDuration.inSeconds / (_totalDistance / 1000)).round() : 0,
-      'splits': _splits.map((d) => d.inSeconds).toList()
+      'user_id': 1,
+      'start_time': today.toIso8601String(),
+      'duration_seconds': _activeDuration.inSeconds,
+      'distance_km': _totalDistance / 1000,
+      'start_latitude': 0,
+      'start_longitude': 0,
+      'end_latitude': 0,
+      'end_longitude': 0,
+      'average_pace_seconds_per_km': _totalDistance > 0 ? (_activeDuration.inSeconds / (_totalDistance / 1000)).round() : 0,
+      'split_paces': _splits.map((d) => d.inSeconds).toList()
     };
 
-    final jsonString = jsonEncode(runData);
-    print(jsonString);
+    sendRunDataToBackend(runData);
 
     setState(() {
       _speed = 0.0;

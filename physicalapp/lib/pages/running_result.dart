@@ -23,19 +23,20 @@ class RunningResultPage extends StatelessWidget {
   RunningResultPage({super.key, required this.runData});
 
   // Data from running
-  String get activityDate => runData['date'];
-  String get totalDistance => (runData['distance'] as num).toStringAsFixed(2);
-  String get avgSpeed => SecondsToPace(runData['avg_speed']);
-  String get totalTime => SecondsToTime(runData['time']);
+  DateTime get startTime => DateTime.parse(runData['start_time']);
+  String get activityDate => '${startTime.year}/${startTime.month.toString().padLeft(2, '0')}/${startTime.day.toString().padLeft(2, '0')}';
+  String get totalDistance => (runData['distance_km'] as num).toStringAsFixed(2);
+  String get avgSpeed => SecondsToPace(runData['average_pace_seconds_per_km']);
+  String get totalTime => SecondsToTime(runData['duration_seconds']);
 
   // This list is now constant because the SpeedSplit class has a const constructor
   List<SpeedSplit> get speedSplits {
-    final List splits = runData['splits'];
+    final List splits = runData['split_paces'];
     if (splits.isEmpty) return [];
 
     return List.generate(splits.length, (index) {
       final int sec = splits[index];
-      final int diff = sec - (runData['avg_speed'] as num).toInt();
+      final int diff = sec - (runData['average_pace_seconds_per_km'] as num).toInt();
       final String formatted = SecondsToPace(sec.toDouble());
       final String difference = diff == 0
           ? '0\"'
