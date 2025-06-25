@@ -150,6 +150,36 @@ def add_activity():
         db.session.rollback()
         return jsonify({'message': f'Error adding activity: {str(e)}'}), 500
 
+# @app.route('/goal', methods=['GET'])
+# def goal():
+#     data = request.get_json()  # 從 JSON 取得資料
+#     if not data:
+#         return jsonify({'error': 'No JSON data received'}), 400
+
+#     new_goal = Activity(
+#         user_id = data.request.get('user_id'),
+#         start_time = db.Column(db.DateTime, nullable=False)
+#         duration_seconds = db.Column(db.Integer, nullable=False)
+#         distance_km = db.Column(db.Float, nullable=False)
+#         average_pace_seconds_per_km = db.Column(db.Integer, nullable=False)
+#         # Using db.Text to store JSON string. For PostgreSQL, consider JSONB.
+#         split_paces_json = db.Column(db.Text, nullable=True)
+#         created_at = db.Column(db.DateTime, default=datetime.utcnow)
+#     )
+    
+#     # 示範資料處理（你可以根據需要儲存進資料庫）
+#     goal_name = data.get('name')
+#     score = data.get('score')
+#     status = data.get('status')
+
+#     # 印出收到的資料（開發除錯用）
+#     print(f"Received goal: name={goal_name}, score={score}, status={status}")
+
+#     # 回傳收到的資料
+#     return jsonify({
+#         'message': 'Goal received successfully',
+#         'data': data
+#     }), 200
 
 @app.route('/activities/<int:user_id>', methods=['GET'])
 def get_user_activities(user_id):
@@ -190,4 +220,4 @@ def init_db_command():
 
 if __name__ == '__main__':
     # Removed db.create_all() from here, as it's now handled by the CLI command
-    app.run(debug=True)
+    app.run(host="127.0.0.1", port="5000", debug=True)

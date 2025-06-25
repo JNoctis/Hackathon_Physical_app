@@ -216,7 +216,7 @@ class _classifyState extends State<classify> {
                 child: Text(
                   'You have completed all the questions!',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 24),
+                  style: TextStyle(fontSize: 24, color: Colors.white),
                 ),
               ),
               SizedBox(height: 16),
@@ -243,7 +243,7 @@ class _classifyState extends State<classify> {
                 child: Text(
                   question,
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black),
                 ),
               ),
               Wrap(
@@ -265,7 +265,10 @@ class _classifyState extends State<classify> {
                       onTap: () => selectOption(option),
                       child: Column(
                         children: [
-                          Text(option, style: TextStyle(fontSize: 18)),
+                          Text(
+                            option,
+                            style: TextStyle(fontSize: 18, color: Colors.black),
+                          ),
                           if (isInputRequired && pendingInputTrigger == key)
                             ...getInputFields(key).map((field) {
                               final subKey = '$key-${field['key']}';
@@ -275,6 +278,7 @@ class _classifyState extends State<classify> {
                                 padding: const EdgeInsets.only(top: 8.0),
                                 child: TextField(
                                   controller: controller,
+                                  style: TextStyle(color: Colors.black),
                                   decoration: InputDecoration(
                                     hintText: field['hint'],
                                     border: OutlineInputBorder(),
