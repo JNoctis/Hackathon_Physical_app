@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class DecisionTreePage extends StatefulWidget {
+  const DecisionTreePage({super.key});
+
   @override
   _DecisionTreePageState createState() => _DecisionTreePageState();
 }
@@ -277,7 +279,7 @@ class _DecisionTreePageState extends State<DecisionTreePage> {
                                   onSubmitted: (_) => submitInput(key),
                                 ),
                               );
-                            }).toList()
+                            })
                         ],
                       ),
                     ),

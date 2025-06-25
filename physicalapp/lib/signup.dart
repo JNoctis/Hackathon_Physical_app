@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import './login.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -10,34 +11,49 @@ class SignUpPage extends StatefulWidget {
 
 class _SignUpPageState extends State<SignUpPage> {
   final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
+
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
 
-  void _register() {
+  Future<void> _register() async {
     final name = _nameController.text.trim();
-    final email = _emailController.text.trim();
     final password = _passwordController.text;
-    final confirmPassword = _confirmPasswordController.text;
 
-    if (name.isEmpty || email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill all fields')),
-      );
+
+    if (name.isEmpty  || password.isEmpty ) {
+      _showMessage('Please fill all fields');
       return;
     }
 
-    if (password != confirmPassword) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Passwords do not match')),
-      );
-      return;
-    }
+    // if (password != confirmPassword) {
+    //   _showMessage('Passwords do not match');
+    //   return;
+    // }
 
-    // TODO: 實際註冊邏輯
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Welcome, $name!')),
-    );
+    try {
+      final response = await http.post(
+        Uri.parse('http://127.0.0.1:5000/register'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'username': name,
+          'password': password,
+          "third_party_id": null
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        _showMessage('Sign up successful!');
+        Navigator.pop(context);
+      } else {
+        final body = jsonDecode(response.body);
+        _showMessage(body['message'] ?? 'Sign up failed');
+      }
+    } catch (e) {
+      _showMessage('Network error: $e');
+    }
+  }
+
+  void _showMessage(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
   @override
@@ -63,10 +79,9 @@ class _SignUpPageState extends State<SignUpPage> {
                 ),
                 child: Column(
                   children: [
-                    _buildField(controller: _nameController, label: 'Name'),
-                    _buildField(controller: _emailController, label: 'Email'),
-                    _buildField(controller: _passwordController, label: 'Password', obscure: true),
-                    _buildField(controller: _confirmPasswordController, label: 'Confirm Password', obscure: true),
+                    _buildField(controller: _nameController, label: 'username'),
+                    _buildField(controller: _passwordController, label: 'password', obscure: true),
+                    // _buildField(controller: _confirmPasswordController, label: 'Confirm Password', obscure: true),
                     const SizedBox(height: 24),
                     ElevatedButton(
                       onPressed: _register,
@@ -82,14 +97,12 @@ class _SignUpPageState extends State<SignUpPage> {
                     ),
                     const SizedBox(height: 12),
                     TextButton(
-                      onPressed: () {
-                        Navigator.pop(context); // 返回登入
-                      },
+                      onPressed: () => Navigator.pop(context),
                       child: const Text(
                         'Back to Login',
                         style: TextStyle(color: Colors.deepPurpleAccent),
                       ),
-                    )
+                    ),
                   ],
                 ),
               ),

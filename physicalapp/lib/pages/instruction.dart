@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class classify extends StatefulWidget {
+  const classify({super.key});
+
   @override
   _classifyState createState() => _classifyState();
 }
@@ -286,7 +288,7 @@ class _classifyState extends State<classify> {
                                   onSubmitted: (_) => submitInput(key),
                                 ),
                               );
-                            }).toList()
+                            })
                         ],
                       ),
                     ),

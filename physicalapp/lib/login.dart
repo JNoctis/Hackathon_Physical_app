@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import './main.dart';
 import './signup.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -13,23 +15,49 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  void _login() {
-    final email = _emailController.text.trim();
-    final password = _passwordController.text;
+  void _login() async {
+  final email = _emailController.text.trim();
+  final password = _passwordController.text;
 
-    if (email.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter both email and password')),
+  if (email.isEmpty || password.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Please enter both email and password')),
+    );
+    return;
+  }
+
+  final url = Uri.parse('http://127.0.0.1:5000/login');
+
+  try {
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'username': email, 'password': password}),
+    );
+
+    if (response.statusCode == 200) {
+      // 登入成功（可能還會收到 token）
+      // final data = jsonDecode(response.body);
+      // 儲存 token 或使用者資訊...
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const MainPage()),
       );
-      return;
+    } else {
+      // 登入失敗
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Login failed. Please check your credentials.')),
+      );
     }
-
-    // TODO: 實作登入驗證邏輯
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const MainPage()),
+  } catch (e) {
+    // 網路或伺服器錯誤
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error: $e')),
     );
   }
+}
+
 
   void _signUp() {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -79,7 +107,7 @@ class _LoginPageState extends State<LoginPage> {
                         controller: _emailController,
                         style: const TextStyle(color: Colors.white),
                         decoration: InputDecoration(
-                          labelText: 'Email',
+                          labelText: 'Username',
                           labelStyle: const TextStyle(color: Colors.white70),
                           enabledBorder: UnderlineInputBorder(
                             borderSide: BorderSide(color: Colors.white38),

@@ -20,7 +20,7 @@ class RunningResultPage extends StatelessWidget {
   final Map<String, dynamic> runData;
 
   // Update the constructor to receive selectedDate
-  RunningResultPage({super.key, required this.runData});
+  const RunningResultPage({super.key, required this.runData});
 
   // Data from running
   DateTime get startTime => DateTime.parse(runData['start_time']);
@@ -39,8 +39,8 @@ class RunningResultPage extends StatelessWidget {
       final int diff = sec - (runData['average_pace_seconds_per_km'] as num).toInt();
       final String formatted = SecondsToPace(sec.toDouble());
       final String difference = diff == 0
-          ? '0\"'
-          : (diff > 0 ? '+${diff}\"' : '${diff}\"');
+          ? '0"'
+          : (diff > 0 ? '+$diff"' : '$diff"');
       return SpeedSplit(
         km: index + 1,
         speed: formatted,

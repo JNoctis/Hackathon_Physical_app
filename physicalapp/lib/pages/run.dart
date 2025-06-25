@@ -25,7 +25,7 @@ class _RunPageState extends State<RunPage> {
   Position? _lastPosition;
   double _totalDistance = 0.0;
   double _distanceSinceLastSplit = 0.0;
-  List<Duration> _splits = [];
+  final List<Duration> _splits = [];
   Duration _lastSplitElapsed = Duration.zero;
   final random = Random(1);
 
@@ -226,9 +226,7 @@ class _RunPageState extends State<RunPage> {
                   children: [
                     const Text('Time', style: TextStyle(fontSize: 16)),
                     Text(
-                      '${totalRunTime.inHours.toString().padLeft(2, '0')}:' +
-                          '${(totalRunTime.inMinutes % 60).toString().padLeft(2, '0')}:' +
-                          '${(totalRunTime.inSeconds % 60).toString().padLeft(2, '0')}',
+                      '${totalRunTime.inHours.toString().padLeft(2, '0')}:${(totalRunTime.inMinutes % 60).toString().padLeft(2, '0')}:${(totalRunTime.inSeconds % 60).toString().padLeft(2, '0')}',
                       style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                     ),
                   ],
