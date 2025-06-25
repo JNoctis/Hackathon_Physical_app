@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
+<<<<<<< HEAD
+import 'package:physicalapp/decision_tree.dart';
+import 'instruction.dart';
+import 'decision_tree.dart';
+=======
 import 'pages/instruction.dart';
 import 'pages/history.dart';
 import 'pages/run.dart';
 import 'login.dart';
+>>>>>>> 8bbf9d21ae06a513481ebc3a09fb16642f303c2e
 
 void main() {
   runApp(const MyApp());
@@ -14,6 +20,28 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+<<<<<<< HEAD
+      title: 'Flutter Demo',
+      home: DecisionTreePage(),
+      theme: ThemeData(
+        // This is the theme of your application.
+        //
+        // TRY THIS: Try running your application with "flutter run". You'll see
+        // the application has a purple toolbar. Then, without quitting the app,
+        // try changing the seedColor in the colorScheme below to Colors.green
+        // and then invoke "hot reload" (save your changes or press the "hot
+        // reload" button in a Flutter-supported IDE, or press "r" if you used
+        // the command line to start the app).
+        //
+        // Notice that the counter didn't reset back to zero; the application
+        // state is not lost during the reload. To reset the state, use hot
+        // restart instead.
+        //
+        // This works for code too, not just values: Most code changes can be
+        // tested with just a hot reload.
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+      ),
+=======
       title: 'Running App',
       themeMode: ThemeMode.dark,
       darkTheme: ThemeData(
@@ -31,6 +59,7 @@ class MyApp extends StatelessWidget {
         '/instruction': (context) => const InstructionPage(),
         '/history': (context) => const HistoryPage(),
       },
+>>>>>>> 8bbf9d21ae06a513481ebc3a09fb16642f303c2e
     );
   }
 }
@@ -49,7 +78,7 @@ class _MainPageState extends State<MainPage> {
     if (index == 0) {
       Navigator.pushNamed(context, '/instruction');
     } else if (index == 1) {
-      setState(() {
+    setState(() {
         _selectedIndex = 1;
       });
     } else if (index == 2) {
@@ -96,7 +125,7 @@ class HomePage extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
       color: const Color(0xFF121212),
-      child: Column(
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Row(
@@ -123,11 +152,11 @@ class HomePage extends StatelessWidget {
             child: Column(
               children: const [
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(Icons.info_outline, color: Colors.deepPurpleAccent),
                     SizedBox(width: 8),
-                    Text(
+            Text(
                       'Running App',
                       style: TextStyle(
                         fontSize: 18,
@@ -142,10 +171,10 @@ class HomePage extends StatelessWidget {
                   'This goal is recommended based on your previous pace and distance to improve endurance.',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 14, color: Colors.white70),
-                ),
-              ],
             ),
-          ),
+          ],
+        ),
+      ),
           const Spacer(),
           GlowingButton(
             text: 'START',
@@ -153,7 +182,7 @@ class HomePage extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const RunPage(goalDistance: 5000),
+                  builder: (context) => const RunPage(goalDistance: 5000), // 輸入目標距離
                 ),
               );
             },

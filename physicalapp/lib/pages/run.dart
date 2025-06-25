@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 
@@ -14,11 +16,15 @@ class _RunPageState extends State<RunPage> {
   double _speed = 0.0;
   StreamSubscription<Position>? _positionStream;
   bool _isPaused = false;
-  DateTime? _currentStartTime;
-  Duration _elapsed = Duration.zero;
+  Duration _activeDuration = Duration.zero;
+  DateTime? _activeStartTime;
   Timer? _timer;
   Position? _lastPosition;
   double _totalDistance = 0.0;
+  double _distanceSinceLastSplit = 0.0;
+  List<Duration> _splits = [];
+  Duration _lastSplitElapsed = Duration.zero;
+  final random = Random(1);
 
   // calculate speed
   String _formatPace(double speedKmh) {
@@ -50,13 +56,29 @@ class _RunPageState extends State<RunPage> {
       }
     }
 
-    _currentStartTime = DateTime.now();
-    _elapsed = Duration.zero;
+    _activeStartTime = DateTime.now();
     _isPaused = false;
 
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!_isPaused && _currentStartTime != null) {
-        setState(() {}); // 觸發畫面刷新
+      if (!_isPaused) {
+
+        // ---RANDOM TESTING---
+        final distance = random.nextDouble() * 100;
+        _totalDistance += distance;
+        _distanceSinceLastSplit += distance;
+          if (_distanceSinceLastSplit >= 1000.0) {
+            final currentElapsed = _activeDuration + 
+                (_activeStartTime == null ? Duration.zero : DateTime.now().difference(_activeStartTime!));
+            
+            final splitDuration = currentElapsed - _lastSplitElapsed;
+            _splits.add(splitDuration);
+
+            _lastSplitElapsed = currentElapsed;
+            _distanceSinceLastSplit = 0.0;
+          }
+          // ---RANDOM TESTING---
+
+        setState(() {});
       }
     });
 
@@ -75,27 +97,41 @@ class _RunPageState extends State<RunPage> {
             position.latitude,
             position.longitude,
           );
+
           _totalDistance += distance;
+          _distanceSinceLastSplit += distance;
+
+          // calculate 1km speed
+          if (_distanceSinceLastSplit >= 1000.0) {
+            final currentElapsed = _activeDuration + 
+                (_activeStartTime == null ? Duration.zero : DateTime.now().difference(_activeStartTime!));
+            
+            final splitDuration = currentElapsed - _lastSplitElapsed;
+            _splits.add(splitDuration);
+
+            _lastSplitElapsed = currentElapsed;
+            _distanceSinceLastSplit = 0.0;
+          }
+
         }
         _lastPosition = position;
+        _speed = position.speed * 3.6;
         print('緯度: ${position.latitude}');
         print('經度: ${position.longitude}');
         print('速度: ${position.speed} m/s');
-        setState(() {
-          _speed = position.speed * 3.6;
-        });
+        setState(() {});
       }
     });
   }
 
   void _pauseTracking() {
     setState(() {
-      if (!_isPaused && _currentStartTime != null) {
-        _elapsed += DateTime.now().difference(_currentStartTime!);
-        _currentStartTime = null;
+      if (!_isPaused && _activeStartTime != null) {
+        _activeDuration += DateTime.now().difference(_activeStartTime!);
+        _activeStartTime = null;
         _timer?.cancel();
       } else {
-        _currentStartTime = DateTime.now();
+        _activeStartTime = DateTime.now();
         _timer = Timer.periodic(const Duration(seconds: 1), (_) {
           setState(() {});
         });
@@ -110,10 +146,25 @@ class _RunPageState extends State<RunPage> {
     _positionStream = null;
     _timer = null;
 
+    // generate json
+    final today = DateTime.now();
+    final dateStr = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+
+    final runData = {
+      'date': dateStr,
+      'distance': _totalDistance / 1000,
+      'time': _activeDuration.inSeconds,
+      'avg_speed': _totalDistance > 0 ? (_activeDuration.inSeconds / (_totalDistance / 1000)).round() : 0,
+      'splits': _splits.map((d) => d.inSeconds).toList()
+    };
+
+    final jsonString = jsonEncode(runData);
+    print(jsonString);
+
     setState(() {
       _speed = 0.0;
-      _elapsed = Duration.zero;
-      _currentStartTime = null;
+      _activeDuration = Duration.zero;
+      _activeStartTime = null;
       _isPaused = false;
     });
 
@@ -129,8 +180,8 @@ class _RunPageState extends State<RunPage> {
 
   @override
   Widget build(BuildContext context) {
-    final totalElapsed = _elapsed +
-        (_currentStartTime == null ? Duration.zero : DateTime.now().difference(_currentStartTime!));
+    final totalRunTime = _activeDuration +
+        (_activeStartTime == null ? Duration.zero : DateTime.now().difference(_activeStartTime!));
 
     return Scaffold(
       appBar: AppBar(title: const Text('Running')),
@@ -147,9 +198,9 @@ class _RunPageState extends State<RunPage> {
                   children: [
                     const Text('Time', style: TextStyle(fontSize: 16)),
                     Text(
-                      '${totalElapsed.inHours.toString().padLeft(2, '0')}:' +
-                          '${(totalElapsed.inMinutes % 60).toString().padLeft(2, '0')}:' +
-                          '${(totalElapsed.inSeconds % 60).toString().padLeft(2, '0')}',
+                      '${totalRunTime.inHours.toString().padLeft(2, '0')}:' +
+                          '${(totalRunTime.inMinutes % 60).toString().padLeft(2, '0')}:' +
+                          '${(totalRunTime.inSeconds % 60).toString().padLeft(2, '0')}',
                       style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                     ),
                   ],

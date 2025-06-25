@@ -78,12 +78,10 @@ class _HistoryPageState extends State<HistoryPage> {
           // Simulate "Done", "Miss", "Today" concepts from the whiteboard sketch with simple colors
           Color backgroundColor = Colors.grey.shade100; // Default background color
           Color textColor = Colors.black87; // Default text color
-          String statusText = ''; // Status text
-
+          
           if (isToday) {
             backgroundColor = Colors.blue.shade100; // Today's color
             textColor = Colors.blue.shade800;
-            statusText = 'Today';
           } else if (day.isBefore(today)) { // Check if it's a past date
             // For simulating different statuses, simple logic based on day number
             // Assume days divisible by 5 are "Missed"
@@ -91,11 +89,9 @@ class _HistoryPageState extends State<HistoryPage> {
             if (day.day % 5 == 0) {
               backgroundColor = Colors.red.shade100;
               textColor = Colors.red.shade800;
-              statusText = 'Missed';
             } else if (day.day % 3 == 0) {
               backgroundColor = Colors.green.shade100;
               textColor = Colors.green.shade800;
-              statusText = 'Done';
             }
           }
           // Future dates do not display status text
@@ -130,19 +126,6 @@ class _HistoryPageState extends State<HistoryPage> {
                       ),
                     ),
                   ),
-                  if (statusText.isNotEmpty && !isToday) // Display status label for non-today done/missed days
-                    Positioned(
-                      top: 4,
-                      right: 4,
-                      child: Text(
-                        statusText,
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: textColor,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
                 ],
               ),
             ),
