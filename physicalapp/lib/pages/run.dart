@@ -3,6 +3,9 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'running_result.dart';
+import '../utils/time_format.dart';
+import 'package:http/http.dart' as http;
 
 class RunPage extends StatefulWidget {
   final double goalDistance;
@@ -27,12 +30,10 @@ class _RunPageState extends State<RunPage> {
   final random = Random(1);
 
   // calculate speed
-  String _formatPace(double speedKmh) {
+  String KmhToPace(double speedKmh) {
     if (speedKmh <= 0) return "--'--\"";
-    final paceMinutes = 60 / speedKmh;
-    final minutes = paceMinutes.floor();
-    final seconds = ((paceMinutes - minutes) * 60).round();
-    return "${minutes.toString().padLeft(2, '0')}'${seconds.toString().padLeft(2, '0')}\"";
+    final paceSeconds = 3600 / speedKmh;
+    return SecondsToPace(paceSeconds);
   }
 
   @override
@@ -140,6 +141,24 @@ class _RunPageState extends State<RunPage> {
     });
   }
 
+  Future<void> sendRunDataToBackend(Map<String, Object> runData) async {
+    final url = Uri.parse('http://127.0.0.1:5000/activities'); // 換成你的後端網址
+    final jsonString = jsonEncode(runData);
+    print(jsonString);
+
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonString,
+    );
+
+    if (response.statusCode == 201) {
+      print('success');
+    } else {
+      print('fail: ${response.statusCode}');
+    }
+  }
+
   void _stopTracking() {
     _positionStream?.cancel();
     _timer?.cancel();
@@ -148,18 +167,22 @@ class _RunPageState extends State<RunPage> {
 
     // generate json
     final today = DateTime.now();
-    final dateStr = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+    final dateStr = '${today.year}/${today.month.toString().padLeft(2, '0')}/${today.day.toString().padLeft(2, '0')}';
 
     final runData = {
-      'date': dateStr,
-      'distance': _totalDistance / 1000,
-      'time': _activeDuration.inSeconds,
-      'avg_speed': _totalDistance > 0 ? (_activeDuration.inSeconds / (_totalDistance / 1000)).round() : 0,
-      'splits': _splits.map((d) => d.inSeconds).toList()
+      'user_id': 1,
+      'start_time': today.toIso8601String(),
+      'duration_seconds': _activeDuration.inSeconds,
+      'distance_km': _totalDistance / 1000,
+      'start_latitude': 0,
+      'start_longitude': 0,
+      'end_latitude': 0,
+      'end_longitude': 0,
+      'average_pace_seconds_per_km': _totalDistance > 0 ? (_activeDuration.inSeconds / (_totalDistance / 1000)).round() : 0,
+      'split_paces': _splits.map((d) => d.inSeconds).toList()
     };
 
-    final jsonString = jsonEncode(runData);
-    print(jsonString);
+    sendRunDataToBackend(runData);
 
     setState(() {
       _speed = 0.0;
@@ -168,7 +191,12 @@ class _RunPageState extends State<RunPage> {
       _isPaused = false;
     });
 
-    Navigator.pop(context);
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => RunningResultPage(runData: runData),
+      ),
+    );
   }
 
   @override
@@ -209,7 +237,7 @@ class _RunPageState extends State<RunPage> {
                   children: [
                     const Text('Pace', style: TextStyle(fontSize: 16)),
                     Text(
-                      _formatPace(_speed),
+                      KmhToPace(_speed),
                       style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                     ),
                   ],
@@ -256,7 +284,6 @@ class _RunPageState extends State<RunPage> {
                       ElevatedButton(
                         onPressed: () {
                           _stopTracking();
-                          Navigator.pushReplacementNamed(context, '/');
                         },
                         style: ElevatedButton.styleFrom(shape: const CircleBorder(), padding: const EdgeInsets.all(20)),
                         child: const Icon(Icons.stop, size: 32),
