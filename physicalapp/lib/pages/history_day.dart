@@ -6,7 +6,7 @@ class SpeedSplit {
   final String speed;
   final String difference; // +/-
 
-    // 添加 const 建構函式
+  // 添加 const 建構函式，使其可以在 const 列表中使用
   const SpeedSplit({
     required this.km,
     required this.speed,
@@ -15,14 +15,20 @@ class SpeedSplit {
 }
 
 class HistoryDayPage extends StatelessWidget {
-  const HistoryDayPage({super.key});
+  // 新增一個 required 的 DateTime 參數來接收選定的日期
+  final DateTime selectedDate;
+
+  // 將建構函式更新為接收 selectedDate
+  const HistoryDayPage({super.key, required this.selectedDate});
 
   // 範例數據 (您可以從您的資料庫或 API 獲取真實數據)
-  final String activityDate = "2025年6月25日";
+  // 將 activityDate 改為動態根據 selectedDate 產生
+  String get activityDate => "${selectedDate.year}年${selectedDate.month}月${selectedDate.day}日";
   final String totalDistance = "10.0";
   final String avgSpeed = "5'30\"";
   final String totalTime = "55:00.12";
-  
+
+  // 這個列表現在是常數，因為 SpeedSplit 類別有了 const 建構函式
   final List<SpeedSplit> speedSplits = const [
     SpeedSplit(km: 1, speed: "5'45\"", difference: "+15\""),
     SpeedSplit(km: 2, speed: "5'40\"", difference: "+10\""),
@@ -52,7 +58,8 @@ class HistoryDayPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('運動紀錄'),
+        // AppBar 標題現在顯示動態日期
+        title: Text('${selectedDate.year}年${selectedDate.month}月${selectedDate.day}日 運動紀錄'),
         backgroundColor: colorScheme.surface,
         foregroundColor: colorScheme.onSurface,
         elevation: 1.0,
@@ -65,7 +72,7 @@ class HistoryDayPage extends StatelessWidget {
           children: [
             // 頂部日期
             Text(
-              activityDate,
+              activityDate, // 現在從 getter 獲取動態日期
               textAlign: TextAlign.center,
               style: textTheme.headlineMedium?.copyWith(
                 fontWeight: FontWeight.bold,
@@ -117,7 +124,7 @@ class HistoryDayPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8.0),
-            
+
             // 分段速度表格
             // 使用 Container 添加邊框
             Container(
@@ -131,7 +138,7 @@ class HistoryDayPage extends StatelessWidget {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(8.0),
                 child: DataTable(
-                  headingRowColor: MaterialStateProperty.resolveWith(
+                  headingRowColor: WidgetStateProperty.resolveWith(
                     (states) => colorScheme.primary.withOpacity(0.1),
                   ),
                   headingTextStyle: textTheme.titleSmall?.copyWith(
