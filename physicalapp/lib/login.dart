@@ -3,6 +3,8 @@ import './main.dart';
 import './signup.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -37,8 +39,10 @@ class _LoginPageState extends State<LoginPage> {
 
     if (response.statusCode == 200) {
       // 登入成功（可能還會收到 token）
-      // final data = jsonDecode(response.body);
-      // 儲存 token 或使用者資訊...
+      final data = jsonDecode(response.body);
+      final userId = data['user_id'];
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('user_id', userId);
 
       Navigator.pushReplacement(
         context,

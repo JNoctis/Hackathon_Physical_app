@@ -6,6 +6,7 @@ import 'package:geolocator/geolocator.dart';
 import 'running_result.dart';
 import '../utils/time_format.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class RunPage extends StatefulWidget {
   final double goalDistance;
@@ -140,8 +141,8 @@ class _RunPageState extends State<RunPage> {
       _isPaused = !_isPaused;
     });
   }
-
-  Future<void> sendRunDataToBackend(Map<String, Object> runData) async {
+  
+  Future<void> sendRunDataToBackend(Map<String, Object?> runData) async {
     final url = Uri.parse('http://127.0.0.1:5000/activities'); // 換成你的後端網址
     final jsonString = jsonEncode(runData);
     print(jsonString);
@@ -159,7 +160,7 @@ class _RunPageState extends State<RunPage> {
     }
   }
 
-  void _stopTracking() {
+  void _stopTracking() async {
     _positionStream?.cancel();
     _timer?.cancel();
     _positionStream = null;
@@ -168,9 +169,12 @@ class _RunPageState extends State<RunPage> {
     // generate json
     final today = DateTime.now();
     final dateStr = '${today.year}/${today.month.toString().padLeft(2, '0')}/${today.day.toString().padLeft(2, '0')}';
+    
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getInt('user_id');
 
     final runData = {
-      'user_id': 1,
+      'user_id': userId,
       'start_time': today.toIso8601String(),
       'duration_seconds': _activeDuration.inSeconds,
       'distance_km': _totalDistance / 1000,
@@ -182,7 +186,7 @@ class _RunPageState extends State<RunPage> {
       'split_paces': _splits.map((d) => d.inSeconds).toList()
     };
 
-    sendRunDataToBackend(runData);
+    await sendRunDataToBackend(runData);
 
     setState(() {
       _speed = 0.0;
