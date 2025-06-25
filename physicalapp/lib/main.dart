@@ -14,15 +14,22 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Running App',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+      themeMode: ThemeMode.dark,
+      darkTheme: ThemeData(
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: const Color(0xFF121212),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.deepPurple,
+          brightness: Brightness.dark,
+        ),
         useMaterial3: true,
       ),
+      theme: ThemeData.dark(),
       home: const MainPage(),
       routes: {
         '/instruction': (context) => const InstructionPage(),
-        '/run': (context) => const RunPage(),
         '/history': (context) => const HistoryPage(),
+        '/run': (context) => const RunPage(),
       },
     );
   }
@@ -36,14 +43,14 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
-  int _selectedIndex = 1; // 預設選中 Run
+  int _selectedIndex = 1;
 
   void _onItemTapped(int index) {
     if (index == 0) {
       Navigator.pushNamed(context, '/instruction');
     } else if (index == 1) {
       setState(() {
-        _selectedIndex = 1; // 回首頁 HomePage
+        _selectedIndex = 1;
       });
     } else if (index == 2) {
       Navigator.pushNamed(context, '/history');
@@ -53,16 +60,14 @@ class _MainPageState extends State<MainPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: const Text('🏃 跑步訓練 App'),
-        centerTitle: true,
-      ),
       body: const HomePage(),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
         type: BottomNavigationBarType.fixed,
+        selectedItemColor: Colors.deepPurpleAccent,
+        unselectedItemColor: Colors.grey,
+        backgroundColor: const Color(0xFF1E1E1E),
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.info),
@@ -89,41 +94,139 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+      color: const Color(0xFF121212),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Info cards
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: const [
+              _InfoBox(title: 'Distance', value: '5 km'),
+              _InfoBox(title: 'Pace', value: '6 min/km'),
+            ],
+          ),
+          const SizedBox(height: 24),
+
+          // Recommendation block
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E1E1E),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.4),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                )
+              ],
+            ),
+            child: Column(
+              children: const [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.info_outline, color: Colors.deepPurpleAccent),
+                    SizedBox(width: 8),
+                    Text(
+                      'Running App',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.deepPurpleAccent,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'This goal is recommended based on your previous pace and distance to improve endurance.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 14, color: Colors.white70),
+                ),
+              ],
+            ),
+          ),
+          const Spacer(),
+
+          // START button
+          GestureDetector(
+            onTap: () {
+              Navigator.pushNamed(context, '/run');
+            },
+            child: Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                color: Colors.amber[600],
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.4),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  )
+                ],
+              ),
+              alignment: Alignment.center,
+              child: const Text(
+                'START',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 40),
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoBox extends StatelessWidget {
+  final String title;
+  final String value;
+
+  const _InfoBox({required this.title, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 160,
+      height: 160,
+      margin: const EdgeInsets.symmetric(vertical: 12),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.deepPurple.shade100, Colors.white],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.deepPurpleAccent, width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.4),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          )
+        ],
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text(
-            '🎯 目標距離：5 km',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          Text(
+            title,
+            style: const TextStyle(fontSize: 18, color: Colors.white70),
           ),
-          const SizedBox(height: 12),
-          const Text(
-            '⏱️ 目標速度：6 min/km',
-            style: TextStyle(fontSize: 20, color: Colors.black87),
-          ),
-          const SizedBox(height: 32),
-          ElevatedButton.icon(
-            onPressed: () {
-              Navigator.pushNamed(context, '/run');
-            },
-            icon: const Icon(Icons.play_arrow),
-            label: const Text('開始訓練', style: TextStyle(fontSize: 18)),
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
-              backgroundColor: Colors.deepPurple,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
-              ),
-              elevation: 6,
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.deepPurpleAccent,
             ),
           ),
         ],
