@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-// 確保路徑正確，如果 history_day.dart 在同一個資料夾，使用相對匯入
+// Ensure the path is correct; use relative import if history_day.dart is in the same folder.
 import 'history_day.dart'; 
 
 class HistoryPage extends StatefulWidget {
@@ -10,19 +10,19 @@ class HistoryPage extends StatefulWidget {
 }
 
 class _HistoryPageState extends State<HistoryPage> {
-  late DateTime _currentMonth; // 用來追蹤目前顯示的月份
+  late DateTime _currentMonth; // Variable to track the currently displayed month
 
   @override
   void initState() {
     super.initState();
-    _currentMonth = DateTime.now(); // 預設顯示當前月份
+    _currentMonth = DateTime.now(); // Default to current month
   }
 
-  // 根據給定的月份生成該月份的所有日期
+  // Generates all days for the given month
   List<DateTime> _generateDaysInMonth(DateTime month) {
     List<DateTime> days = [];
     final firstDayOfMonth = DateTime(month.year, month.month, 1);
-    // 獲取該月的最後一天 (下個月的第0天)
+    // Get the last day of the month (0th day of the next month)
     final lastDayOfMonth = DateTime(month.year, month.month + 1, 0);
 
     for (int i = 0; i < lastDayOfMonth.day; i++) {
@@ -34,14 +34,14 @@ class _HistoryPageState extends State<HistoryPage> {
   @override
   Widget build(BuildContext context) {
     final List<DateTime> daysInMonth = _generateDaysInMonth(_currentMonth);
-    final DateTime today = DateTime.now(); // 獲取今天的日期
+    final DateTime today = DateTime.now(); // Get today's date
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('${_currentMonth.year}年${_currentMonth.month}月'), // 顯示當前年份和月份
+        title: Text('${_currentMonth.year}/${_currentMonth.month}'), // Display current year and month
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: [
-          // 上一個月按鈕
+          // Previous month button
           IconButton(
             icon: const Icon(Icons.arrow_back_ios),
             onPressed: () {
@@ -50,7 +50,7 @@ class _HistoryPageState extends State<HistoryPage> {
               });
             },
           ),
-          // 下一個月按鈕
+          // Next month button
           IconButton(
             icon: const Icon(Icons.arrow_forward_ios),
             onPressed: () {
@@ -64,49 +64,49 @@ class _HistoryPageState extends State<HistoryPage> {
       body: GridView.builder(
         padding: const EdgeInsets.all(8.0),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 7, // 每行顯示 7 天 (一週)
-          crossAxisSpacing: 4.0, // 水平間距
-          mainAxisSpacing: 4.0, // 垂直間距
-          childAspectRatio: 1.0, // 讓每個網格項目保持方形
+          crossAxisCount: 7, // Display 7 days per row (one week)
+          crossAxisSpacing: 4.0, // Horizontal spacing
+          mainAxisSpacing: 4.0, // Vertical spacing
+          childAspectRatio: 1.0, // Keep grid items square
         ),
         itemCount: daysInMonth.length,
         itemBuilder: (context, index) {
           final day = daysInMonth[index];
-          // 判斷是否為今天，以便進行特別樣式處理
+          // Determine if it's today for special styling
           final bool isToday = day.year == today.year && day.month == today.month && day.day == today.day;
 
-          // 根據白板圖的「Done」、「Miss」、「Today」概念，進行簡單的顏色模擬
-          Color backgroundColor = Colors.grey.shade100; // 預設背景色
-          Color textColor = Colors.black87; // 預設文字顏色
-          String statusText = ''; // 狀態文字
+          // Simulate "Done", "Miss", "Today" concepts from the whiteboard sketch with simple colors
+          Color backgroundColor = Colors.grey.shade100; // Default background color
+          Color textColor = Colors.black87; // Default text color
+          String statusText = ''; // Status text
 
           if (isToday) {
-            backgroundColor = Colors.blue.shade100; // 今日顏色
+            backgroundColor = Colors.blue.shade100; // Today's color
             textColor = Colors.blue.shade800;
-            statusText = '今日';
-          } else if (day.isBefore(today)) { // 判斷是否為過去的日期
-            // 為了模擬不同的狀態，根據日期來簡單判斷
-            // 假設日數是3的倍數表示已完成
-            // 假設日數是5的倍數表示未完成 (優先於已完成，僅為模擬)
+            statusText = 'Today';
+          } else if (day.isBefore(today)) { // Check if it's a past date
+            // For simulating different statuses, simple logic based on day number
+            // Assume days divisible by 5 are "Missed"
+            // Assume days divisible by 3 are "Done" (has lower priority for simulation)
             if (day.day % 5 == 0) {
               backgroundColor = Colors.red.shade100;
               textColor = Colors.red.shade800;
-              statusText = '未完成';
+              statusText = 'Missed';
             } else if (day.day % 3 == 0) {
               backgroundColor = Colors.green.shade100;
               textColor = Colors.green.shade800;
-              statusText = '已完成';
+              statusText = 'Done';
             }
           }
-          // 未來日期不顯示狀態文字
+          // Future dates do not display status text
 
           return InkWell(
             onTap: () {
-              // 點擊後導航到 HistoryDayPage，並傳遞選定的日期
+              // Navigate to HistoryDayPage on tap, passing the selected date
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  // 這裡傳遞 selectedDate 給 HistoryDayPage
+                  // Pass selectedDate to HistoryDayPage here
                   builder: (context) => HistoryDayPage(selectedDate: day),
                 ),
               );
@@ -116,13 +116,13 @@ class _HistoryPageState extends State<HistoryPage> {
               elevation: 2,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8.0),
-                side: isToday ? const BorderSide(color: Colors.blue, width: 2) : BorderSide.none, // 今日邊框
+                side: isToday ? const BorderSide(color: Colors.blue, width: 2) : BorderSide.none, // Today's border
               ),
-              child: Stack( // 使用 Stack 讓文字和狀態標籤可以疊加
+              child: Stack( // Use Stack to overlay text and status label
                 children: [
                   Center(
                     child: Text(
-                      '${day.day}', // 顯示日期號碼
+                      '${day.day}', // Display day number
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -130,7 +130,7 @@ class _HistoryPageState extends State<HistoryPage> {
                       ),
                     ),
                   ),
-                  if (statusText.isNotEmpty && !isToday) // 在非今日的已完成/未完成日顯示狀態標籤
+                  if (statusText.isNotEmpty && !isToday) // Display status label for non-today done/missed days
                     Positioned(
                       top: 4,
                       right: 4,

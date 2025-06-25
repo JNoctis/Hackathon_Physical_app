@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
-// 為了範例數據，我們先定義一個簡單的分段數據模型
+// For example data, let's first define a simple split data model
 class SpeedSplit {
   final int km;
   final String speed;
   final String difference; // +/-
 
-  // 添加 const 建構函式，使其可以在 const 列表中使用
+  // Add const constructor to enable use in const lists
   const SpeedSplit({
     required this.km,
     required this.speed,
@@ -15,20 +15,20 @@ class SpeedSplit {
 }
 
 class HistoryDayPage extends StatelessWidget {
-  // 新增一個 required 的 DateTime 參數來接收選定的日期
+  // Add a required DateTime parameter to receive the selected date
   final DateTime selectedDate;
 
-  // 將建構函式更新為接收 selectedDate
+  // Update the constructor to receive selectedDate
   const HistoryDayPage({super.key, required this.selectedDate});
 
-  // 範例數據 (您可以從您的資料庫或 API 獲取真實數據)
-  // 將 activityDate 改為動態根據 selectedDate 產生
-  String get activityDate => "${selectedDate.year}年${selectedDate.month}月${selectedDate.day}日";
+  // Example data (you can fetch real data from your database or API)
+  // activityDate is now dynamically generated based on selectedDate
+  String get activityDate => "${selectedDate.year}/${selectedDate.month}/${selectedDate.day}";
   final String totalDistance = "10.0";
   final String avgSpeed = "5'30\"";
   final String totalTime = "55:00.12";
 
-  // 這個列表現在是常數，因為 SpeedSplit 類別有了 const 建構函式
+  // This list is now constant because the SpeedSplit class has a const constructor
   final List<SpeedSplit> speedSplits = const [
     SpeedSplit(km: 1, speed: "5'45\"", difference: "+15\""),
     SpeedSplit(km: 2, speed: "5'40\"", difference: "+10\""),
@@ -45,12 +45,12 @@ class HistoryDayPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 使用 Theme 來獲取當前主題的顏色，使其更具適應性
+    // Use Theme to get current theme colors for better adaptability
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
 
-    // 定義一個邊框樣式來模仿草圖中的手繪方框
+    // Define a border style to mimic the hand-drawn boxes in the sketch
     final boxBorder = Border.all(
       color: colorScheme.primary.withOpacity(0.8),
       width: 2.0,
@@ -58,21 +58,21 @@ class HistoryDayPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        // AppBar 標題現在顯示動態日期
-        title: Text('${selectedDate.year}年${selectedDate.month}月${selectedDate.day}日 運動紀錄'),
+        // AppBar title now displays dynamic date
+        title: Text('${selectedDate.year}/${selectedDate.month}/${selectedDate.day} Workout Record'),
         backgroundColor: colorScheme.surface,
         foregroundColor: colorScheme.onSurface,
         elevation: 1.0,
       ),
       body: SingleChildScrollView(
-        // 使用 SingleChildScrollView 確保在小螢幕上內容可以滾動
+        // Use SingleChildScrollView to ensure content can scroll on small screens
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // 頂部日期
+            // Top date
             Text(
-              activityDate, // 現在從 getter 獲取動態日期
+              activityDate, // Now getting dynamic date from getter
               textAlign: TextAlign.center,
               style: textTheme.headlineMedium?.copyWith(
                 fontWeight: FontWeight.bold,
@@ -80,7 +80,7 @@ class HistoryDayPage extends StatelessWidget {
             ),
             const SizedBox(height: 24.0),
 
-            // 中間的數據摘要 (距離 & 速度)
+            // Middle data summary (Distance & Speed)
             Row(
               children: [
                 Expanded(
@@ -106,7 +106,7 @@ class HistoryDayPage extends StatelessWidget {
             ),
             const SizedBox(height: 16.0),
 
-            // 時間
+            // Time
             _buildMetricCard(
               label: 'Time',
               value: totalTime,
@@ -116,7 +116,7 @@ class HistoryDayPage extends StatelessWidget {
             ),
             const SizedBox(height: 32.0),
 
-            // 分段速度標題
+            // Partial Speed title
             Text(
               'Partial Speed',
               style: textTheme.titleLarge?.copyWith(
@@ -125,8 +125,8 @@ class HistoryDayPage extends StatelessWidget {
             ),
             const SizedBox(height: 8.0),
 
-            // 分段速度表格
-            // 使用 Container 添加邊框
+            // Partial Speed Table
+            // Use Container to add border
             Container(
               decoration: BoxDecoration(
                 border: Border.all(
@@ -134,11 +134,11 @@ class HistoryDayPage extends StatelessWidget {
                 ),
                 borderRadius: BorderRadius.circular(8.0),
               ),
-              // ClipRRect 確保 DataTable 的圓角效果
+              // ClipRRect ensures rounded corners for DataTable
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(8.0),
                 child: DataTable(
-                  headingRowColor: WidgetStateProperty.resolveWith(
+                  headingRowColor: WidgetStateProperty.resolveWith( // Updated from MaterialStateProperty to WidgetStateProperty
                     (states) => colorScheme.primary.withOpacity(0.1),
                   ),
                   headingTextStyle: textTheme.titleSmall?.copyWith(
@@ -177,7 +177,7 @@ class HistoryDayPage extends StatelessWidget {
     );
   }
 
-  // 抽取出一個建立數據卡片的方法，避免程式碼重複
+  // Extracted method to build metric cards, avoiding code repetition
   Widget _buildMetricCard({
     required String label,
     required String value,
