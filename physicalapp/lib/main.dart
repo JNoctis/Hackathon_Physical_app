@@ -260,7 +260,7 @@ class _GlowingButtonState extends State<GlowingButton>
                 gradient: LinearGradient(
                   colors: _isHovering
                       ? [Colors.pinkAccent, Colors.lightBlueAccent]
-                      : [Colors.grey.shade800, Colors.grey.shade700],
+                      : [const Color.fromARGB(255, 254, 132, 1), const Color.fromARGB(255, 249, 88, 2)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   transform:
