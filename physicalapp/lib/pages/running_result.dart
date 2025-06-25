@@ -35,7 +35,7 @@ class RunningResultPage extends StatelessWidget {
     if (splits.isEmpty) return [];
 
     return List.generate(splits.length, (index) {
-      final int sec = splits[index];
+      final int sec = (splits[index] as num).toInt();
       final int diff = sec - (runData['average_pace_seconds_per_km'] as num).toInt();
       final String formatted = SecondsToPace(sec.toDouble());
       final String difference = diff == 0

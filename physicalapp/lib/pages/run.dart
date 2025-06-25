@@ -63,24 +63,7 @@ class _RunPageState extends State<RunPage> {
     _isPaused = false;
 
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!_isPaused) {
-
-        // // ---RANDOM TESTING---
-        // final distance = random.nextDouble() * 100;
-        // _totalDistance += distance;
-        // _distanceSinceLastSplit += distance;
-        //   if (_distanceSinceLastSplit >= 1000.0) {
-        //     final currentElapsed = _activeDuration + 
-        //         (_activeStartTime == null ? Duration.zero : DateTime.now().difference(_activeStartTime!));
-            
-        //     final splitDuration = currentElapsed - _lastSplitElapsed;
-        //     _splits.add(splitDuration);
-
-        //     _lastSplitElapsed = currentElapsed;
-        //     _distanceSinceLastSplit = 0.0;
-        //   }
-        //   // ---RANDOM TESTING---
-
+      if (!_isPaused && _activeStartTime != null) {
         setState(() {});
       }
     });
@@ -179,10 +162,10 @@ class _RunPageState extends State<RunPage> {
       'start_time': today.toIso8601String(),
       'duration_seconds': _activeDuration.inSeconds,
       'distance_km': _totalDistance / 1000,
-      'start_latitude': 0,
-      'start_longitude': 0,
-      'end_latitude': 0,
-      'end_longitude': 0,
+      'start_latitude': 0.0,
+      'start_longitude': 0.0,
+      'end_latitude': 0.0,
+      'end_longitude': 0.0,
       'average_pace_seconds_per_km': _totalDistance > 0 ? (_activeDuration.inSeconds / (_totalDistance / 1000)).round() : 0,
       'split_paces': _splits.map((d) => d.inSeconds).toList()
     };
