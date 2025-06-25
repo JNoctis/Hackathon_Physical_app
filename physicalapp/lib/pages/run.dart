@@ -65,21 +65,21 @@ class _RunPageState extends State<RunPage> {
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!_isPaused) {
 
-        // ---RANDOM TESTING---
-        final distance = random.nextDouble() * 100;
-        _totalDistance += distance;
-        _distanceSinceLastSplit += distance;
-          if (_distanceSinceLastSplit >= 1000.0) {
-            final currentElapsed = _activeDuration + 
-                (_activeStartTime == null ? Duration.zero : DateTime.now().difference(_activeStartTime!));
+        // // ---RANDOM TESTING---
+        // final distance = random.nextDouble() * 100;
+        // _totalDistance += distance;
+        // _distanceSinceLastSplit += distance;
+        //   if (_distanceSinceLastSplit >= 1000.0) {
+        //     final currentElapsed = _activeDuration + 
+        //         (_activeStartTime == null ? Duration.zero : DateTime.now().difference(_activeStartTime!));
             
-            final splitDuration = currentElapsed - _lastSplitElapsed;
-            _splits.add(splitDuration);
+        //     final splitDuration = currentElapsed - _lastSplitElapsed;
+        //     _splits.add(splitDuration);
 
-            _lastSplitElapsed = currentElapsed;
-            _distanceSinceLastSplit = 0.0;
-          }
-          // ---RANDOM TESTING---
+        //     _lastSplitElapsed = currentElapsed;
+        //     _distanceSinceLastSplit = 0.0;
+        //   }
+        //   // ---RANDOM TESTING---
 
         setState(() {});
       }
