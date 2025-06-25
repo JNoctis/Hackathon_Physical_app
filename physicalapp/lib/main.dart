@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'pages/instruction.dart';
 import 'pages/history.dart';
+import 'pages/run.dart';
 
 void main() {
   runApp(const MyApp());
@@ -20,6 +21,7 @@ class MyApp extends StatelessWidget {
       home: const MainPage(),
       routes: {
         '/instruction': (context) => const InstructionPage(),
+        '/run': (context) => const RunPage(),
         '/history': (context) => const HistoryPage(),
       },
     );
@@ -110,9 +112,7 @@ class HomePage extends StatelessWidget {
           const SizedBox(height: 32),
           ElevatedButton.icon(
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('訓練已開始！')),
-              );
+              Navigator.pushNamed(context, '/run');
             },
             icon: const Icon(Icons.play_arrow),
             label: const Text('開始訓練', style: TextStyle(fontSize: 18)),
