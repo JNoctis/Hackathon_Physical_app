@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'pages/instruction.dart';
 import 'pages/history.dart';
 import 'pages/run.dart';
+import 'login.dart';
 
 void main() {
   runApp(const MyApp());
@@ -25,7 +26,7 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
       theme: ThemeData.dark(),
-      home: const MainPage(),
+      home: const LoginPage(),
       routes: {
         '/instruction': (context) => const InstructionPage(),
         '/history': (context) => const HistoryPage(),
