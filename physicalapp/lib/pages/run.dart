@@ -7,6 +7,7 @@ import 'running_result.dart';
 import '../utils/time_format.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class RunPage extends StatefulWidget {
   final double goalDistance;
@@ -143,7 +144,7 @@ class _RunPageState extends State<RunPage> {
   }
   
   Future<void> sendRunDataToBackend(Map<String, Object?> runData) async {
-    final url = Uri.parse('http://127.0.0.1:5000/activities'); // 換成你的後端網址
+    final url = Uri.parse('${dotenv.env['BASE_URL']}/activities'); 
     final jsonString = jsonEncode(runData);
     print(jsonString);
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -31,7 +32,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://127.0.0.1:5000/register'),
+        Uri.parse('${dotenv.env['BASE_URL']}/register'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'username': name,

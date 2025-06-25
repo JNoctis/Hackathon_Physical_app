@@ -3,8 +3,12 @@ import 'pages/instruction.dart';
 import 'pages/history.dart';
 import 'pages/run.dart';
 import 'login.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load();
+
   runApp(const MyApp());
 }
 

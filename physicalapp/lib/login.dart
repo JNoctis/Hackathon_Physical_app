@@ -4,6 +4,7 @@ import './signup.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 
 class LoginPage extends StatefulWidget {
@@ -28,7 +29,7 @@ class _LoginPageState extends State<LoginPage> {
     return;
   }
 
-  final url = Uri.parse('http://127.0.0.1:5000/login');
+  final url = Uri.parse('${dotenv.env['BASE_URL']}/login');
 
   try {
     final response = await http.post(
