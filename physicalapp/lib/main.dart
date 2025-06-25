@@ -99,7 +99,6 @@ class HomePage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Info cards
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: const [
@@ -108,8 +107,6 @@ class HomePage extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 24),
-
-          // Recommendation block
           Container(
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
             decoration: BoxDecoration(
@@ -150,42 +147,16 @@ class HomePage extends StatelessWidget {
             ),
           ),
           const Spacer(),
-
-          // START button
-          GestureDetector(
+          GlowingButton(
+            text: 'START',
             onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const RunPage(goalDistance: 5000), // 輸入目標距離
+                  builder: (context) => const RunPage(goalDistance: 5000),
                 ),
               );
             },
-            child: Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                color: Colors.amber[600],
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.4),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  )
-                ],
-              ),
-              alignment: Alignment.center,
-              child: const Text(
-                'START',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                  letterSpacing: 1.2,
-                ),
-              ),
-            ),
           ),
           const SizedBox(height: 40),
         ],
@@ -235,6 +206,92 @@ class _InfoBox extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class GlowingButton extends StatefulWidget {
+  final VoidCallback onTap;
+  final String text;
+
+  const GlowingButton({super.key, required this.onTap, required this.text});
+
+  @override
+  State<GlowingButton> createState() => _GlowingButtonState();
+}
+
+class _GlowingButtonState extends State<GlowingButton>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  bool _isHovering = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovering = true),
+      onExit: (_) => setState(() => _isHovering = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedBuilder(
+          animation: _controller,
+          builder: (context, _) {
+            return Container(
+              width: 140,
+              height: 140,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  colors: _isHovering
+                      ? [Colors.pinkAccent, Colors.lightBlueAccent]
+                      : [Colors.grey.shade800, Colors.grey.shade700],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  transform:
+                      GradientRotation(_controller.value * 2 * 3.1416),
+                ),
+                boxShadow: _isHovering
+                    ? [
+                        BoxShadow(
+                          color: Colors.pinkAccent.withOpacity(0.6),
+                          blurRadius: 20,
+                          spreadRadius: 2,
+                        ),
+                        BoxShadow(
+                          color: Colors.blueAccent.withOpacity(0.6),
+                          blurRadius: 20,
+                          spreadRadius: 2,
+                        ),
+                      ]
+                    : [],
+              ),
+              child: Text(
+                widget.text,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: _isHovering ? Colors.black : Colors.white,
+                ),
+              ),
+            );
+          },
+        ),
       ),
     );
   }
