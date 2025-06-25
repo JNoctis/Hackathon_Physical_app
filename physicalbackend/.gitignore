@@ -1,2 +1,5 @@
 # instance
 instance/
+
+# .env file
+.idea/
