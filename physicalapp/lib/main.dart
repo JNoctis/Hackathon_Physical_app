@@ -29,7 +29,6 @@ class MyApp extends StatelessWidget {
       routes: {
         '/instruction': (context) => const InstructionPage(),
         '/history': (context) => const HistoryPage(),
-        '/run': (context) => const RunPage(),
       },
     );
   }
@@ -154,7 +153,12 @@ class HomePage extends StatelessWidget {
           // START button
           GestureDetector(
             onTap: () {
-              Navigator.pushNamed(context, '/run');
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const RunPage(goalDistance: 5000), // 輸入目標距離
+                ),
+              );
             },
             child: Container(
               width: 120,

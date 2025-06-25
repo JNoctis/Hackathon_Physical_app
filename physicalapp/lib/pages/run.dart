@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 
 class RunPage extends StatefulWidget {
-  const RunPage({super.key});
+  final double goalDistance;
+  const RunPage({super.key, required this.goalDistance});
 
   @override
   State<RunPage> createState() => _RunPageState();
@@ -16,14 +17,16 @@ class _RunPageState extends State<RunPage> {
   DateTime? _currentStartTime;
   Duration _elapsed = Duration.zero;
   Timer? _timer;
+  Position? _lastPosition;
+  double _totalDistance = 0.0;
 
   // calculate speed
   String _formatPace(double speedKmh) {
-    if (speedKmh <= 0) return '--:--';
+    if (speedKmh <= 0) return "--'--\"";
     final paceMinutes = 60 / speedKmh;
     final minutes = paceMinutes.floor();
     final seconds = ((paceMinutes - minutes) * 60).round();
-    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')} /km';
+    return "${minutes.toString().padLeft(2, '0')}'${seconds.toString().padLeft(2, '0')}\"";
   }
 
   @override
@@ -64,6 +67,20 @@ class _RunPageState extends State<RunPage> {
       ),
     ).listen((Position position) {
       if (!_isPaused) {
+        // calculate distance
+        if (_lastPosition != null) {
+          final distance = Geolocator.distanceBetween(
+            _lastPosition!.latitude,
+            _lastPosition!.longitude,
+            position.latitude,
+            position.longitude,
+          );
+          _totalDistance += distance;
+        }
+        _lastPosition = position;
+        print('緯度: ${position.latitude}');
+        print('經度: ${position.longitude}');
+        print('速度: ${position.speed} m/s');
         setState(() {
           _speed = position.speed * 3.6;
         });
@@ -117,39 +134,88 @@ class _RunPageState extends State<RunPage> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Running')),
-      body: Center(
+      body: Padding(
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              '${totalElapsed.inHours.toString().padLeft(2, '0')}:'
-              '${(totalElapsed.inMinutes % 60).toString().padLeft(2, '0')}:'
-              '${(totalElapsed.inSeconds % 60).toString().padLeft(2, '0')}',
-              style: const TextStyle(fontSize: 24),
+            // Time & Speed
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Column(
+                  children: [
+                    const Text('Time', style: TextStyle(fontSize: 16)),
+                    Text(
+                      '${totalElapsed.inHours.toString().padLeft(2, '0')}:' +
+                          '${(totalElapsed.inMinutes % 60).toString().padLeft(2, '0')}:' +
+                          '${(totalElapsed.inSeconds % 60).toString().padLeft(2, '0')}',
+                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+                Column(
+                  children: [
+                    const Text('Pace', style: TextStyle(fontSize: 16)),
+                    Text(
+                      _formatPace(_speed),
+                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ],
             ),
-            Text(
-              _formatPace(_speed),
-              style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
+
+            const SizedBox(height: 32),
+
+            // Distance
+            Column(
+              children: [
+                const Text('Distance', style: TextStyle(fontSize: 16)),
+                Text(
+                  '${(_totalDistance / 1000).toStringAsFixed(2)} km',
+                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                ),
+              ],
             ),
+
+            const SizedBox(height: 32),
+
+            // Progress Bar (optional, currently static)
+            LinearProgressIndicator(
+              value: (_totalDistance / 1000 / widget.goalDistance).clamp(0.0, 1.0),
+              minHeight: 10,
+              backgroundColor: Colors.grey[300],
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.deepPurple),
+            ),
+
             const SizedBox(height: 40),
+
+            // Control Buttons
             _isPaused
                 ? Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       ElevatedButton(
                         onPressed: _pauseTracking,
-                        child: const Text('繼續'),
+                        style: ElevatedButton.styleFrom(shape: const CircleBorder(), padding: const EdgeInsets.all(20)),
+                        child: const Icon(Icons.play_arrow, size: 32),
                       ),
-                      const SizedBox(width: 20),
+                      const SizedBox(width: 24),
                       ElevatedButton(
-                        onPressed: _stopTracking,
-                        child: const Text('結束'),
+                        onPressed: () {
+                          _stopTracking();
+                          Navigator.pushReplacementNamed(context, '/');
+                        },
+                        style: ElevatedButton.styleFrom(shape: const CircleBorder(), padding: const EdgeInsets.all(20)),
+                        child: const Icon(Icons.stop, size: 32),
                       ),
                     ],
                   )
                 : ElevatedButton(
                     onPressed: _pauseTracking,
-                    child: const Text('暫停'),
+                    style: ElevatedButton.styleFrom(shape: const CircleBorder(), padding: const EdgeInsets.all(20)),
+                    child: const Icon(Icons.pause, size: 32),
                   ),
           ],
         ),
