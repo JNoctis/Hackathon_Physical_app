@@ -11,15 +11,15 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class RunPage extends StatefulWidget {
   final double goalDistance;
-  final double goalSpeed;
-  const RunPage({super.key, required this.goalDistance, required this.goalSpeed});
+  final double goalPace;
+  const RunPage({super.key, required this.goalDistance, required this.goalPace});
 
   @override
   State<RunPage> createState() => _RunPageState();
 }
 
 class _RunPageState extends State<RunPage> {
-  double _speed = 0.0;
+  double _pace = 0.0;
   StreamSubscription<Position>? _positionStream;
   bool _isPaused = false;
   Duration _activeDuration = Duration.zero;
@@ -31,13 +31,6 @@ class _RunPageState extends State<RunPage> {
   final List<Duration> _splits = [];
   Duration _lastSplitElapsed = Duration.zero;
   final random = Random(1);
-
-  // calculate speed
-  String KmhToPace(double speedKmh) {
-    if (speedKmh <= 0) return "--'--\"";
-    final paceSeconds = 3600 / speedKmh;
-    return SecondsToPace(paceSeconds);
-  }
 
   @override
   void initState() {
@@ -72,7 +65,7 @@ class _RunPageState extends State<RunPage> {
     _positionStream = Geolocator.getPositionStream(
       locationSettings: const LocationSettings(
         accuracy: LocationAccuracy.best,
-        distanceFilter: 0,
+        distanceFilter: 5,
       ),
     ).listen((Position position) {
       if (!_isPaused) {
@@ -102,7 +95,7 @@ class _RunPageState extends State<RunPage> {
 
         }
         _lastPosition = position;
-        _speed = position.speed;
+        _pace = position.speed == 0 ? -1 : 3600 / position.speed;
         print('緯度: ${position.latitude}');
         print('經度: ${position.longitude}');
         print('速度: ${position.speed} km/h');
@@ -152,9 +145,7 @@ class _RunPageState extends State<RunPage> {
     _timer = null;
 
     // generate json
-    final today = DateTime.now();
-    final dateStr = '${today.year}/${today.month.toString().padLeft(2, '0')}/${today.day.toString().padLeft(2, '0')}';
-    
+    final today = DateTime.now();    
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getInt('user_id');
 
@@ -174,7 +165,7 @@ class _RunPageState extends State<RunPage> {
     await sendRunDataToBackend(runData);
 
     setState(() {
-      _speed = 0.0;
+      _pace = 0.0;
       _activeDuration = Duration.zero;
       _activeStartTime = null;
       _isPaused = false;
@@ -207,7 +198,7 @@ class _RunPageState extends State<RunPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Time & Speed
+            // Time & Pace
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -224,7 +215,7 @@ class _RunPageState extends State<RunPage> {
                   children: [
                     const Text('Pace', style: TextStyle(fontSize: 16)),
                     Text(
-                      KmhToPace(_speed),
+                      SecondsToPace(_pace),
                       style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                     ),
                   ],
