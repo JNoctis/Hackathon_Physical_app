@@ -28,6 +28,7 @@ class _ReportCardPageState extends State<ReportCardPage> {
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             const Text.rich(
               TextSpan(
@@ -35,14 +36,14 @@ class _ReportCardPageState extends State<ReportCardPage> {
                   TextSpan(
                     text: '你是\n',
                     style: TextStyle(
-                      fontSize: 20, // 👈 較小字體
+                      fontSize: 20,
                       color: Colors.white,
                     ),
                   ),
                   TextSpan(
                     text: '穩健型\n',
                     style: TextStyle(
-                      fontSize: 36, // 👈 最大的字體
+                      fontSize: 36,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
@@ -50,7 +51,7 @@ class _ReportCardPageState extends State<ReportCardPage> {
                   TextSpan(
                     text: '養成者',
                     style: TextStyle(
-                      fontSize: 20, // 👈 較小字體
+                      fontSize: 20,
                       color: Colors.white,
                     ),
                   ),
@@ -58,19 +59,19 @@ class _ReportCardPageState extends State<ReportCardPage> {
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFF2A1F3C),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Text(
-                '完成今日距離與配速目標\n本週穩健的你完成了三次跑步就完成 9 公里\n在平均配速方面提升 15 秒/km\n你穩定在固定節奏中養成長期動力',
-                style: TextStyle(color: Colors.white70, fontSize: 16),
-              ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Expanded(child: _StatBox(title: '本週次數', value: '3')),
+                const SizedBox(width: 10),
+                Expanded(child: _StatBox(title: '總距離', value: '9')),
+                const SizedBox(width: 10),
+                Expanded(child: _StatBox(title: '配速提升', value: '15(S/km)')),
+                const SizedBox(width: 10),
+              ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
             Row(
               children: [
                 const Text('習慣穩定度', style: TextStyle(color: Colors.white)),
@@ -84,7 +85,6 @@ class _ReportCardPageState extends State<ReportCardPage> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                const SizedBox(height: 30),
                 const Text('82%', style: TextStyle(color: Colors.white)),
               ],
             ),
@@ -145,6 +145,32 @@ class ReportTag extends StatelessWidget {
       backgroundColor: Colors.deepPurple,
       shape: const StadiumBorder(
         side: BorderSide(color: Colors.deepPurpleAccent),
+      ),
+    );
+  }
+}
+
+class _StatBox extends StatelessWidget {
+  final String title;
+  final String value;
+
+  const _StatBox({required this.title, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      decoration: BoxDecoration(
+        color: Colors.purple,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(title, style: const TextStyle(color: Colors.white, fontSize: 16)),
+          const SizedBox(height: 8),
+          Text(value, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+        ],
       ),
     );
   }
