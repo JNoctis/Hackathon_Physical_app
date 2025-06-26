@@ -35,14 +35,14 @@ class Activity(db.Model):
     start_time = db.Column(db.DateTime, nullable=False)
     duration_seconds = db.Column(db.Integer, nullable=False)
     distance_km = db.Column(db.Float, nullable=False)
-    start_latitude = db.Column(db.Float, nullable=True)
-    start_longitude = db.Column(db.Float, nullable=True)
     end_latitude = db.Column(db.Float, nullable=True)
     end_longitude = db.Column(db.Float, nullable=True)
     average_pace_seconds_per_km = db.Column(db.Integer, nullable=False)
     # Using db.Text to store JSON string. For PostgreSQL, consider JSONB.
     split_paces_json = db.Column(db.Text, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    goal_state = db.Column(db.String, nullable=True)
+    goal_dist = db.Column(db.Float, nullable=True)
+    goal_pace = db.Column(db.Integer, nullable=True)
 
     def __repr__(self):
         return f'<Activity {self.id} for User {self.user_id}>'

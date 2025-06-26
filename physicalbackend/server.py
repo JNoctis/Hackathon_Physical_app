@@ -118,12 +118,13 @@ def add_activity():
             start_time=start_time,
             duration_seconds=data['duration_seconds'],
             distance_km=data['distance_km'],
-            start_latitude=data.get('start_latitude'),
-            start_longitude=data.get('start_longitude'),
             end_latitude=data.get('end_latitude'),
             end_longitude=data.get('end_longitude'),
             average_pace_seconds_per_km=data['average_pace_seconds_per_km'],
-            split_paces_json=split_paces_json_string
+            split_paces_json=split_paces_json_string,
+            goal_state = data.get('goal_state'),
+            goal_dist = data.get('goal_dist'),
+            goal_pace = data.get('goal_pace')
         )
         db.session.add(new_activity)
         db.session.commit()
