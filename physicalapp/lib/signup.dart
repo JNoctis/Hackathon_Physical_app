@@ -41,9 +41,9 @@ class _SignUpPageState extends State<SignUpPage> {
         }),
       );
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 201) {
         _showMessage('Sign up successful!');
-        Navigator.pop(context);
+        Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
       } else {
         final body = jsonDecode(response.body);
         _showMessage(body['message'] ?? 'Sign up failed');
@@ -91,10 +91,18 @@ class _SignUpPageState extends State<SignUpPage> {
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
+                          borderRadius: BorderRadius.circular(24), //201
                         ),
                       ),
                       child: const Text('Register'),
+                    
+                      // if (response.statusCode == 201) {
+                      //   _showMessage('Sign up successful!');
+                      //   Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+                      // } else {
+                      //   final body = jsonDecode(response.body);
+                      //   _showMessage(body['message'] ?? 'Sign up failed');
+                      // },
                     ),
                     const SizedBox(height: 12),
                     TextButton(

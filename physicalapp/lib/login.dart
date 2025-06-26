@@ -163,7 +163,6 @@ class _LoginPageState extends State<LoginPage> {
                           style: TextStyle(
                             color: Colors.deepPurpleAccent,
                             fontSize: 14,
-                            decoration: TextDecoration.underline,
                           ),
                         ),
                       )
