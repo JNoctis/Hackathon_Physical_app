@@ -32,6 +32,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData.dark(),
       home: const LoginPage(),
       routes: {
+        '/login': (context) => const LoginPage(),
         '/instruction': (context) => classify(),
         '/history': (context) => const HistoryPage(),
       },
