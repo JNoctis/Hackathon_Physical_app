@@ -101,10 +101,10 @@ class _RunPageState extends State<RunPage> {
 
         }
         _lastPosition = position;
-        _speed = position.speed * 3.6;
+        _speed = position.speed;
         print('緯度: ${position.latitude}');
         print('經度: ${position.longitude}');
-        print('速度: ${position.speed} m/s');
+        print('速度: ${position.speed} km/h');
         setState(() {});
       }
     });
