@@ -9,6 +9,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:lottie/lottie.dart';
 
 class RunPage extends StatefulWidget {
   final double goalDistance;
@@ -19,7 +20,7 @@ class RunPage extends StatefulWidget {
   State<RunPage> createState() => _RunPageState();
 }
 
-class _RunPageState extends State<RunPage> {
+class _RunPageState extends State<RunPage> with SingleTickerProviderStateMixin {
   double _pace = 0.0;
   StreamSubscription<Position>? _positionStream;
   bool _isPaused = false;
@@ -34,7 +35,7 @@ class _RunPageState extends State<RunPage> {
   final List<double> _recentPaces = [];
   final int _paceCheckPeriod = 10;
   final AudioPlayer _audioPlayer = AudioPlayer();
-
+  double _progress = 0.0;
 
   @override
   void initState() {
@@ -73,7 +74,6 @@ class _RunPageState extends State<RunPage> {
       ),
     ).listen((Position position) {
       if (!_isPaused) {
-        // calculate distance
         if (_lastPosition != null) {
           final distance = Geolocator.distanceBetween(
             _lastPosition!.latitude,
@@ -85,11 +85,10 @@ class _RunPageState extends State<RunPage> {
           _totalDistance += distance;
           _distanceSinceLastSplit += distance;
 
-          // calculate time period
           if (_distanceSinceLastSplit >= 1000.0) {
             final currentElapsed = _activeDuration + 
                 (_activeStartTime == null ? Duration.zero : DateTime.now().difference(_activeStartTime!));
-            
+
             final splitDuration = currentElapsed - _lastSplitElapsed;
             _splits.add(splitDuration);
 
@@ -98,19 +97,14 @@ class _RunPageState extends State<RunPage> {
           }
         }
         _lastPosition = position;
-        // m/s to s/km
         _pace = position.speed == 0 ? -1 : 1000 / position.speed;
 
-        // save recent pace
         if(_pace > 0){
           _recentPaces.add(_pace);
 
-          // remove oldest
           if (_recentPaces.length > _paceCheckPeriod) {
-            // remove oldest
             _recentPaces.removeAt(0);
 
-            // compare average and goal
             if(average(_recentPaces) > widget.goalPace + 15){
               print('Alert: Too fast!');
               _audioPlayer.play(AssetSource('audio/slower.mp3'));
@@ -124,24 +118,21 @@ class _RunPageState extends State<RunPage> {
           }
         }
 
-        print('經緯度: ${position.latitude}, ${position.longitude}');
-        print('速度: ${position.speed} m/s');
-        setState(() {});
+        setState(() {
+          _progress = (_totalDistance / 1000 / widget.goalDistance).clamp(0.0, 1.0);
+        });
       }
     });
   }
 
   void _pauseTracking() {
     setState(() {
-      // palse
       if (!_isPaused && _activeStartTime != null) {
         _activeDuration += DateTime.now().difference(_activeStartTime!);
         _activeStartTime = null;
         _lastPosition = null;
         _timer?.cancel();
-      }
-      // continue
-      else {
+      } else {
         _activeStartTime = DateTime.now();
         _timer = Timer.periodic(const Duration(seconds: 1), (_) {
           setState(() {});
@@ -150,7 +141,7 @@ class _RunPageState extends State<RunPage> {
       _isPaused = !_isPaused;
     });
   }
-  
+
   Future<void> sendRunDataToBackend(Map<String, Object?> runData) async {
     final url = Uri.parse('${dotenv.env['BASE_URL']}/activities'); 
     final jsonString = jsonEncode(runData);
@@ -175,7 +166,6 @@ class _RunPageState extends State<RunPage> {
     _positionStream = null;
     _timer = null;
 
-    // generate json
     final today = DateTime.now();    
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getInt('user_id');
@@ -227,7 +217,8 @@ class _RunPageState extends State<RunPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Time & Pace
+            const SizedBox(height: 16),
+
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -254,7 +245,6 @@ class _RunPageState extends State<RunPage> {
 
             const SizedBox(height: 32),
 
-            // Distance
             Column(
               children: [
                 const Text('Distance', style: TextStyle(fontSize: 16)),
@@ -267,17 +257,45 @@ class _RunPageState extends State<RunPage> {
 
             const SizedBox(height: 32),
 
-            // Progress Bar (optional, currently static)
-            LinearProgressIndicator(
-              value: (_totalDistance / 1000 / widget.goalDistance).clamp(0.0, 1.0),
-              minHeight: 10,
-              backgroundColor: Colors.grey[300],
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.deepPurple),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final barWidth = constraints.maxWidth;
+                final manPosition = _progress * barWidth;
+
+                return SizedBox(
+                  height: 80,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Positioned(
+                        left: manPosition - 25,
+                        top: 0,
+                        child: SizedBox(
+                          width: 50,
+                          height: 50,
+                          child: Lottie.asset('assets/lottie/running.json'),
+                        ),
+                      ),
+                      Positioned(
+                        top: 40,
+                        child: SizedBox(
+                          width: barWidth,
+                          child: LinearProgressIndicator(
+                            value: _progress,
+                            minHeight: 10,
+                            backgroundColor: Colors.grey[300],
+                            valueColor: const AlwaysStoppedAnimation<Color>(Colors.deepPurple),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
 
             const SizedBox(height: 40),
 
-            // Control Buttons
             _isPaused
                 ? Row(
                     mainAxisAlignment: MainAxisAlignment.center,
