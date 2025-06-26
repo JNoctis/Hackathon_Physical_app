@@ -82,19 +82,21 @@ class _HistoryPageState extends State<HistoryPage> {
           if (isToday) {
             backgroundColor = Colors.blue.shade100; // Today's color
             textColor = Colors.blue.shade800;
-          } else if (day.isBefore(today)) { // Check if it's a past date
-            // For simulating different statuses, simple logic based on day number
-            // Assume days divisible by 5 are "Missed"
-            // Assume days divisible by 3 are "Done" (has lower priority for simulation)
-            if (day.day % 5 == 0) {
-              backgroundColor = Colors.red.shade100;
-              textColor = Colors.red.shade800;
-            } else if (day.day % 3 == 0) {
-              backgroundColor = Colors.green.shade100;
-              textColor = Colors.green.shade800;
-            }
-          }
-          // Future dates do not display status text
+          } 
+          // 暫時停用隨機顯示的 Done (綠色) 和 Miss (紅色)
+          // else if (day.isBefore(today)) { // Check if it's a past date
+          //   // For simulating different statuses, simple logic based on day number
+          //   // Assume days divisible by 5 are "Missed"
+          //   // Assume days divisible by 3 are "Done" (has lower priority for simulation)
+          //   if (day.day % 5 == 0) {
+          //     backgroundColor = Colors.red.shade100;
+          //     textColor = Colors.red.shade800;
+          //   } else if (day.day % 3 == 0) {
+          //     backgroundColor = Colors.green.shade100;
+          //     textColor = Colors.green.shade800;
+          //   }
+          // }
+          // 未來日期不顯示狀態文本
 
           return InkWell(
             onTap: () {
