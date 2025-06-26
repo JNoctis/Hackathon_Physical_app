@@ -4,23 +4,20 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:convert';
 import 'package:intl/intl.dart'; // For date formatting
 import 'package:shared_preferences/shared_preferences.dart';
+import '../utils/time_format.dart';
 
-// For individual split pace data from backend
-class RawSpeedSplit {
+// For example data, let's first define a simple split data model
+class SpeedSplit {
   final int km;
-  final int paceSeconds; // Pace in seconds for that km
+  final String speed;
+  final String difference; // +/-
 
-  RawSpeedSplit({
+  // Add const constructor to enable use in const lists
+  const SpeedSplit({
     required this.km,
-    required this.paceSeconds,
+    required this.speed,
+    required this.difference,
   });
-
-  factory RawSpeedSplit.fromJson(Map<String, dynamic> json) {
-    return RawSpeedSplit(
-      km: json['km'],
-      paceSeconds: json['pace_seconds'],
-    );
-  }
 }
 
 // Data model for an individual activity record from backend
@@ -31,7 +28,7 @@ class ActivityData {
   final int durationSeconds;
   final double distanceKm;
   final double averagePaceSecondsPerKm;
-  final List<RawSpeedSplit> splitPaces;
+  final List splitPaces;
   final String? goalState;
   final double? goalDist;
   final int? goalPace;
@@ -50,9 +47,6 @@ class ActivityData {
   });
 
   factory ActivityData.fromJson(Map<String, dynamic> json) {
-    var splitPacesJson = json['split_paces'] as List;
-    List<RawSpeedSplit> splitPaces = splitPacesJson.map((s) => RawSpeedSplit.fromJson(s)).toList();
-
     return ActivityData(
       id: json['id'],
       userId: json['user_id'],
@@ -60,42 +54,12 @@ class ActivityData {
       durationSeconds: json['duration_seconds'],
       distanceKm: json['distance_km'].toDouble(),
       averagePaceSecondsPerKm: json['average_pace_seconds_per_km'].toDouble(),
-      splitPaces: splitPaces,
+      splitPaces: json['split_paces'],
       goalState: json['goal_state'],
       goalDist: json['goal_dist']?.toDouble(),
       goalPace: json['goal_pace'],
     );
   }
-}
-
-// Data model for display in the SpeedSplit DataTable
-class DisplaySpeedSplit {
-  final int km;
-  final String speed; // formatted string e.g., "4'30\""
-  final String difference; // formatted string e.g., "+0'05\"" or "-0'10\""
-
-  DisplaySpeedSplit({
-    required this.km,
-    required this.speed,
-    required this.difference,
-  });
-}
-
-// Utility function to format seconds to M'SS"
-String formatPace(double seconds) {
-  final minutes = (seconds / 60).floor();
-  final remainingSeconds = (seconds % 60).round();
-  return "$minutes'${remainingSeconds.toString().padLeft(2, '0')}\"";
-}
-
-// Utility function to format total seconds to HH:MM:SS
-String formatDuration(int totalSeconds) {
-  final duration = Duration(seconds: totalSeconds);
-  String twoDigits(int n) => n.toString().padLeft(2, '0');
-  String hours = twoDigits(duration.inHours);
-  String minutes = twoDigits(duration.inMinutes.remainder(60));
-  String seconds = twoDigits(duration.inSeconds.remainder(60));
-  return "$hours:$minutes:$seconds";
 }
 
 class HistoryDayPage extends StatefulWidget {
@@ -241,6 +205,28 @@ class _HistoryDayPageState extends State<HistoryDayPage> {
       width: 2.0,
     );
 
+    // This list is now constant because the SpeedSplit class has a const constructor
+    List<SpeedSplit> _buildSpeedSplits(ActivityData activity) {
+      final List splits = activity.splitPaces;
+      if (splits.isEmpty) return [];
+
+      return List.generate(splits.length, (index) {
+        final int sec = (splits[index] as num).toInt();
+        final int diff = sec - activity.averagePaceSecondsPerKm.toInt();
+        final String formatted = SecondsToPace(sec.toDouble());
+        final String difference = diff == 0
+            ? '0"'
+            : (diff > 0
+                ? '+${SecondsToSimplePace(diff.toDouble())}'
+                : '-${SecondsToSimplePace((-diff).toDouble())}');
+        return SpeedSplit(
+          km: index + 1,
+          speed: formatted,
+          difference: difference,
+        );
+      });
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text('${DateFormat('yyyy/MM/dd').format(widget.selectedDate)} Workout Record'),
@@ -334,32 +320,6 @@ class _HistoryDayPageState extends State<HistoryDayPage> {
                                   break;
                               }
 
-                              // Prepare split paces for display
-                              List<DisplaySpeedSplit> displaySpeedSplits = [];
-                              // Add a check to ensure splitPaces is not null and has data
-                              if (activity.splitPaces.isNotEmpty) {
-                                for (int i = 0; i < activity.splitPaces.length; i++) {
-                                  final currentSplit = activity.splitPaces[i];
-                                  String difference = '';
-                                  if (i > 0) {
-                                    final prevSplit = activity.splitPaces[i - 1];
-                                    final diffSeconds = currentSplit.paceSeconds - prevSplit.paceSeconds;
-                                    final sign = diffSeconds >= 0 ? '+' : '';
-                                    difference = '$sign${formatPace(diffSeconds.toDouble())}';
-                                  } else {
-                                    difference = '---'; // No difference for the first km
-                                  }
-                                  displaySpeedSplits.add(
-                                    DisplaySpeedSplit(
-                                      km: currentSplit.km,
-                                      speed: formatPace(currentSplit.paceSeconds.toDouble()),
-                                      difference: difference,
-                                    ),
-                                  );
-                                }
-                              }
-
-
                               return SingleChildScrollView(
                                 padding: const EdgeInsets.all(16.0),
                                 child: Column(
@@ -421,7 +381,7 @@ class _HistoryDayPageState extends State<HistoryDayPage> {
                                         Expanded(
                                           child: _buildMetricCard(
                                             label: 'Avg Speed',
-                                            value: formatPace(activity.averagePaceSecondsPerKm),
+                                            value: SecondsToPace(activity.averagePaceSecondsPerKm.toDouble()),
                                             unit: '/km',
                                             border: boxBorder,
                                             context: context,
@@ -434,7 +394,7 @@ class _HistoryDayPageState extends State<HistoryDayPage> {
                                     // Total Time
                                     _buildMetricCard(
                                       label: 'Total Time',
-                                      value: formatDuration(activity.durationSeconds),
+                                      value: SecondsToPace(activity.durationSeconds.toDouble()),
                                       border: boxBorder,
                                       context: context,
                                       isWide: true,
@@ -451,63 +411,49 @@ class _HistoryDayPageState extends State<HistoryDayPage> {
                                     const SizedBox(height: 8.0),
 
                                     // Partial Speed Table
-                                    // Only show table if there are split paces
-                                    if (displaySpeedSplits.isNotEmpty)
-                                      Container(
-                                        decoration: BoxDecoration(
-                                          border: Border.all(
-                                            color: Colors.grey.shade400,
-                                          ),
-                                          borderRadius: BorderRadius.circular(8.0),
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        border: Border.all(
+                                          color: Colors.grey.shade400,
                                         ),
-                                        child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(8.0),
-                                          child: DataTable(
-                                            headingRowColor: WidgetStateProperty.resolveWith(
-                                              (states) => colorScheme.primary.withOpacity(0.1),
-                                            ),
-                                            headingTextStyle: textTheme.titleSmall?.copyWith(
-                                              fontWeight: FontWeight.bold,
-                                              color: colorScheme.onSurface,
-                                            ),
-                                            columns: const [
-                                              DataColumn(label: Text('Km')),
-                                              DataColumn(label: Text('Speed')),
-                                              DataColumn(label: Text('+/-')),
-                                            ],
-                                            rows: displaySpeedSplits.map((split) {
-                                              return DataRow(
-                                                cells: [
-                                                  DataCell(Text(split.km.toString())),
-                                                  DataCell(Text(split.speed)),
-                                                  DataCell(Text(
-                                                    split.difference,
-                                                    style: TextStyle(
-                                                      color: split.difference.startsWith('+')
-                                                          ? Colors.red.shade700
-                                                          : (split.difference.startsWith('-')
-                                                              ? Colors.green.shade700
-                                                              : colorScheme.onSurface),
-                                                    ),
-                                                  )),
-                                                ],
-                                              );
-                                            }).toList(),
+                                        borderRadius: BorderRadius.circular(8.0),
+                                      ),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(8.0),
+                                        child: DataTable(
+                                          headingRowColor: WidgetStateProperty.resolveWith(
+                                            (states) => colorScheme.primary.withOpacity(0.1),
                                           ),
-                                        ),
-                                      )
-                                    else
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(vertical: 16.0),
-                                        child: Text(
-                                          'No split pace data available.',
-                                          textAlign: TextAlign.center,
-                                          style: textTheme.bodyLarge?.copyWith(
-                                            color: Colors.grey.shade500,
+                                          headingTextStyle: textTheme.titleSmall?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                            color: colorScheme.onSurface,
                                           ),
+                                          columns: const [
+                                            DataColumn(label: Text('Km')),
+                                            DataColumn(label: Text('Speed')),
+                                            DataColumn(label: Text('+/-')),
+                                          ],
+                                          rows: _buildSpeedSplits(activity).map((split) {
+                                            return DataRow(
+                                              cells: [
+                                                DataCell(Text(split.km.toString())),
+                                                DataCell(Text(split.speed)),
+                                                DataCell(Text(
+                                                  split.difference,
+                                                  style: TextStyle(
+                                                    color: split.difference.startsWith('+')
+                                                        ? Colors.red.shade700
+                                                        : (split.difference.startsWith('-')
+                                                            ? Colors.green.shade700
+                                                            : colorScheme.onSurface),
+                                                  ),
+                                                )),
+                                              ],
+                                            );
+                                          }).toList(),
                                         ),
                                       ),
-                                    const SizedBox(height: 20), // Add some space at the bottom
+                                    )
                                   ],
                                 ),
                               );
