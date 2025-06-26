@@ -112,12 +112,12 @@ class _RunPageState extends State<RunPage> {
             // compare average and goal
             if(average(_recentPaces) > widget.goalPace + 15){
               print('Alert: Too fast!');
-              _audioPlayer.play(AssetSource('audio/too_fast.mp3'));
+              _audioPlayer.play(AssetSource('audio/slower.mp3'));
               _recentPaces.clear();
             }
             else if(average(_recentPaces) < widget.goalPace - 15){
               print('Alert: Too slow!');
-              _audioPlayer.play(AssetSource('audio/too_slow.mp3'));
+              _audioPlayer.play(AssetSource('audio/faster.mp3'));
               _recentPaces.clear();
             }
           }
