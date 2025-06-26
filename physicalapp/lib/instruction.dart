@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:physicalapp/main.dart';
 import 'package:physicalapp/pages/history.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
 class ClassifyPage extends StatefulWidget {
 
   const ClassifyPage({super.key});
@@ -209,6 +214,7 @@ class _ClassifyState extends State<ClassifyPage> {
   @override
   Widget build(BuildContext context) {
     if (currentQuestionId == null) {
+      print(answers);
       return Scaffold(
         appBar: AppBar(title: Text('Questionnaire Completed')),
         body: Center(
@@ -225,6 +231,35 @@ class _ClassifyState extends State<ClassifyPage> {
               ),
               SizedBox(height: 16),
               ElevatedButton(onPressed: restart, child: Text('Restart')),
+              ElevatedButton(
+                onPressed: () async {
+                  final prefs = await SharedPreferences.getInstance();
+                  final userId = prefs.getInt('user_id');
+                  answers = {...answers, 'user_id': userId.toString()};
+
+                  final url = Uri.parse('${dotenv.env['BASE_URL']}/finish_questionare');
+                  final response = await http.post(
+                    url,
+                    headers: {'Content-Type': 'application/json'},
+                    body: jsonEncode(answers),
+                  );
+
+                  if (response.statusCode == 201) {
+                    // success
+                    if (context.mounted) {
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(builder: (context) => const MainPage()),
+                      );
+                    }
+                  } else {
+                    // error
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Submit failed: ${response.statusCode}')),
+                    );
+                  }
+                },
+                child: const Text('Finish'),
+              ),
             ],
           ),
         ),
