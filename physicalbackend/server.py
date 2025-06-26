@@ -294,6 +294,27 @@ def update_trait_after_run():
     else:
         return jsonify({'message': 'No update needed'}), 200
 
+# get today goal
+@app.route('/goal/<int:user_id>', methods=['GET'])
+def get_goal(user_id):
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'message': 'User not found'}), 404
+
+    goal = Trait.query.filter_by(user_id=user_id).first()
+
+    if goal and goal.curr_goal:
+        dist = goal.curr_goal.get('dist', -1)
+        pace = goal.curr_goal.get('pace', -1)
+    else:
+        # if not finish questionare
+        dist = -1
+        pace = -1
+
+    return jsonify({
+        'goal_dist': dist,
+        'goal_pace': pace
+    }), 200
 
 if __name__ == '__main__':
     # Use Power Shell：run_server.ps1
