@@ -292,7 +292,7 @@ class _HistoryPageState extends State<HistoryPage> {
                               Text(
                                 'Hi, $_username 👋',
                                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                      color: Colors.deepPurpleAccent,
+                                      color: const Color.fromARGB(255, 7, 7, 7),
                                       fontWeight: FontWeight.bold,
                                     ),
                               ),
@@ -388,8 +388,8 @@ class _HistoryPageState extends State<HistoryPage> {
         onTap: _onItemTapped,
         type: BottomNavigationBarType.fixed,
         selectedItemColor: Colors.deepPurpleAccent,
-        unselectedItemColor: Colors.grey,
-        backgroundColor: const Color(0xFF1E1E1E),
+        unselectedItemColor: const Color.fromARGB(255, 3, 3, 3),
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.info),

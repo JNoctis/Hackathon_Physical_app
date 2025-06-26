@@ -12,23 +12,16 @@ class SignUpPage extends StatefulWidget {
 
 class _SignUpPageState extends State<SignUpPage> {
   final TextEditingController _nameController = TextEditingController();
-
   final TextEditingController _passwordController = TextEditingController();
 
   Future<void> _register() async {
     final name = _nameController.text.trim();
     final password = _passwordController.text;
 
-
-    if (name.isEmpty  || password.isEmpty ) {
+    if (name.isEmpty || password.isEmpty) {
       _showMessage('Please fill all fields');
       return;
     }
-
-    // if (password != confirmPassword) {
-    //   _showMessage('Passwords do not match');
-    //   return;
-    // }
 
     try {
       final response = await http.post(
@@ -37,7 +30,7 @@ class _SignUpPageState extends State<SignUpPage> {
         body: jsonEncode({
           'username': name,
           'password': password,
-          "third_party_id": null
+          'third_party_id': null
         }),
       );
 
@@ -60,7 +53,7 @@ class _SignUpPageState extends State<SignUpPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: const Color.fromARGB(255, 32, 32, 32),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(32),
@@ -75,41 +68,32 @@ class _SignUpPageState extends State<SignUpPage> {
                 width: 320,
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade900,
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Column(
                   children: [
                     _buildField(controller: _nameController, label: 'username'),
                     _buildField(controller: _passwordController, label: 'password', obscure: true),
-                    // _buildField(controller: _confirmPasswordController, label: 'Confirm Password', obscure: true),
                     const SizedBox(height: 24),
                     ElevatedButton(
                       onPressed: _register,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.deepPurple,
+                        backgroundColor: Colors.black,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24), //201
+                          borderRadius: BorderRadius.circular(24),
                         ),
                       ),
                       child: const Text('Register'),
-                    
-                      // if (response.statusCode == 201) {
-                      //   _showMessage('Sign up successful!');
-                      //   Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
-                      // } else {
-                      //   final body = jsonDecode(response.body);
-                      //   _showMessage(body['message'] ?? 'Sign up failed');
-                      // },
                     ),
                     const SizedBox(height: 12),
                     TextButton(
                       onPressed: () => Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false),
                       child: const Text(
                         'Back to Login',
-                        style: TextStyle(color: Colors.deepPurpleAccent),
+                        style: TextStyle(color: Colors.black),
                       ),
                     ),
                   ],
@@ -122,18 +106,25 @@ class _SignUpPageState extends State<SignUpPage> {
     );
   }
 
-  Widget _buildField({required TextEditingController controller, required String label, bool obscure = false}) {
+  Widget _buildField({
+    required TextEditingController controller,
+    required String label,
+    bool obscure = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: TextField(
         controller: controller,
         obscureText: obscure,
-        style: const TextStyle(color: Colors.white),
+        style: const TextStyle(color: Colors.black), // 文字顏色
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: const TextStyle(color: Colors.white70),
+          labelStyle: const TextStyle(color: Colors.black87), // 標籤文字
           enabledBorder: const UnderlineInputBorder(
-            borderSide: BorderSide(color: Colors.white38),
+            borderSide: BorderSide(color: Colors.black45), // 預設底線
+          ),
+          focusedBorder: const UnderlineInputBorder(
+            borderSide: BorderSide(color: Colors.black), // 聚焦底線
           ),
         ),
       ),

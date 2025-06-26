@@ -77,7 +77,7 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: const Color.fromARGB(255, 32, 32, 32),
       body: Center(
         child: SingleChildScrollView(
           child: Padding(
@@ -99,7 +99,7 @@ class _LoginPageState extends State<LoginPage> {
                   width: 320,
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade900,
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
@@ -113,12 +113,12 @@ class _LoginPageState extends State<LoginPage> {
                     children: [
                       TextField(
                         controller: _emailController,
-                        style: const TextStyle(color: Colors.white),
+                        style: const TextStyle(color: Colors.black),
                         decoration: InputDecoration(
                           labelText: 'Username',
-                          labelStyle: const TextStyle(color: Colors.white70),
+                          labelStyle: const TextStyle(color: Colors.black),
                           enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white38),
+                            borderSide: BorderSide(color: Colors.black),
                           ),
                         ),
                         keyboardType: TextInputType.emailAddress,
@@ -127,12 +127,12 @@ class _LoginPageState extends State<LoginPage> {
                       TextField(
                         controller: _passwordController,
                         obscureText: true,
-                        style: const TextStyle(color: Colors.white),
+                        style: const TextStyle(color: Colors.black),
                         decoration: InputDecoration(
                           labelText: 'Password',
-                          labelStyle: const TextStyle(color: Colors.white70),
+                          labelStyle: const TextStyle(color: Colors.black),
                           enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white38),
+                            borderSide: BorderSide(color: Colors.black),
                           ),
                         ),
                       ),
@@ -140,7 +140,7 @@ class _LoginPageState extends State<LoginPage> {
                       ElevatedButton(
                         onPressed: _login,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.deepPurple.shade300,
+                          backgroundColor: Colors.black,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(
                               horizontal: 32, vertical: 12),
@@ -161,7 +161,7 @@ class _LoginPageState extends State<LoginPage> {
                         child: const Text(
                           'Sign Up',
                           style: TextStyle(
-                            color: Colors.deepPurpleAccent,
+                            color: Colors.black,
                             fontSize: 14,
                           ),
                         ),
