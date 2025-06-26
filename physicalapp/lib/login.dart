@@ -47,7 +47,9 @@ class _LoginPageState extends State<LoginPage> {
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const MainPage()),
+        MaterialPageRoute(
+          builder: (context) => MainPage(username: email), // ✅ 將登入的 username 傳遞下去
+        ),
       );
     } else {
       // 登入失敗

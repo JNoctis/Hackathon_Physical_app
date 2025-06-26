@@ -23,6 +23,9 @@ RATIO_UPDATE_LENGTH = 0.7
 # flask init-db
 # python server.py
 
+# Import db and models from database.py
+from database import db, User, Activity, init_db_command
+
 # Initialize Flask app
 app = Flask(__name__)
 CORS(app) # Enable CORS for all routes
@@ -35,6 +38,10 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialize db with the Flask app
 db.init_app(app)
+
+# --- Custom Flask CLI Command for Database Initialization ---
+# Register the init_db_command with the Flask app's CLI
+app.cli.add_command(click.command("init-db")(init_db_command))
 
 # --- Custom Flask CLI Command for Database Initialization ---
 # Register the init_db_command with the Flask app's CLI
@@ -155,8 +162,6 @@ def get_user_activities(user_id):
             'created_at': activity.created_at.isoformat()
         })
     return jsonify(output), 200
-
-
 
 @app.route('/finish_questionare', methods=['POST'])
 def finish_questionare():

@@ -33,15 +33,22 @@ class MyApp extends StatelessWidget {
       home: const LoginPage(),
       routes: {
         '/login': (context) => const LoginPage(),
-        '/instruction': (context) => classify(),
-        '/history': (context) => const HistoryPage(),
+        '/history': (context) {
+            final username = ModalRoute.of(context)!.settings.arguments as String;
+            return HistoryPage(username: username);
+          },
+          '/instruction': (context) {
+            final username = ModalRoute.of(context)!.settings.arguments as String;
+            return classify(username: username);
+          },
       },
     );
   }
 }
 
 class MainPage extends StatefulWidget {
-  const MainPage({super.key});
+  final String username;
+  const MainPage({super.key, required this.username});
 
   @override
   State<MainPage> createState() => _MainPageState();
@@ -52,13 +59,18 @@ class _MainPageState extends State<MainPage> {
 
   void _onItemTapped(int index) {
     if (index == 0) {
-      Navigator.pushNamed(context, '/instruction');
+      Navigator.pushNamed(context, '/instruction', arguments: widget.username);
     } else if (index == 1) {
     setState(() {
         _selectedIndex = 1;
       });
     } else if (index == 2) {
-      Navigator.pushNamed(context, '/history');
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => HistoryPage(username: widget.username), // ✅ 傳遞 username
+        ),
+      );
     }
   }
 
