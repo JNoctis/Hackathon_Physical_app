@@ -23,11 +23,11 @@ Future<Map<String, dynamic>> getAnalysis(int userId) async {
       print(const JsonEncoder.withIndent('  ').convert(data));
       return data;
     } else {
-      throw Exception('取得資料失敗，狀態碼：${response.statusCode}');
+      throw Exception('fetch error:${response.statusCode}');
     }
   } catch (e) {
-    print('解析錯誤: $e');
-    rethrow; // 讓呼叫端也能捕捉錯誤
+    print('parse error: $e');
+    rethrow; 
   }
 }
 
@@ -40,14 +40,29 @@ class _ReportCardPageState extends State<ReportCardPage> {
     super.initState();
     analysisFuture = getAnalysis(101); // 載入 user_id=101 的分析資料
   }
+      // 取值
+    final userId = analysisFuture['user_id'];
+    final userType = analysisFuture['user_type'];
+    final habitLevel = analysisFuture['habit_level'];
+    final time = analysisFuture['time'];
+    final addDistFlag = analysisFuture['add_dist_flag'];
+    final weightPraiseFlag = analysisFuture['weight_praise_flag'];
+
+    // 巢狀取值
+    final doneWeek = analysisFuture['done_week'] as Map<String, dynamic>;
+    final roundWeek = doneWeek['round_week'];
+    final distWeek = doneWeek['dist_week'];
+    final avgPaceWeek = doneWeek['avg_pace_week'];
+    final completeWeek = doneWeek['complete_week'];
+
+    final weightPraise = analysisFuture['weight_praise'] as Map<String, dynamic>;
+    final addDist = weightPraise['add_dist'];
+    final expWeightDrop = weightPraise['exp_weight_drop'];
   
   
   
   @override
   Widget build(BuildContext context) {
-
-
-
     return Scaffold(
       backgroundColor: const Color(0xFF1C132B),
       appBar: AppBar(
@@ -79,7 +94,7 @@ class _ReportCardPageState extends State<ReportCardPage> {
                   TextSpan(
                     text: '穩健型\n',
                     style: TextStyle(
-                      fontSize: 36,
+                      fontSize: 36, // 
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
