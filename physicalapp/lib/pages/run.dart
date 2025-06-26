@@ -1,13 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'running_result.dart';
 import '../utils/time_format.dart';
+import '../utils/calculate.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 class RunPage extends StatefulWidget {
   final double goalDistance;
@@ -30,7 +31,9 @@ class _RunPageState extends State<RunPage> {
   double _distanceSinceLastSplit = 0.0;
   final List<Duration> _splits = [];
   Duration _lastSplitElapsed = Duration.zero;
-  final random = Random(1);
+  final List<double> _recentPaces = [];
+  final int _paceCheckPeriod = 10;
+  final AudioPlayer _audioPlayer = AudioPlayer();
 
   @override
   void initState() {
@@ -92,13 +95,36 @@ class _RunPageState extends State<RunPage> {
             _lastSplitElapsed = currentElapsed;
             _distanceSinceLastSplit = 0.0;
           }
-
         }
         _lastPosition = position;
-        _pace = position.speed == 0 ? -1 : 3600 / position.speed;
-        print('緯度: ${position.latitude}');
-        print('經度: ${position.longitude}');
-        print('速度: ${position.speed} km/h');
+        // m/s to s/km
+        _pace = position.speed == 0 ? -1 : 1000 / position.speed;
+
+        // save recent pace
+        if(_pace > 0){
+          _recentPaces.add(_pace);
+
+          // remove oldest
+          if (_recentPaces.length > _paceCheckPeriod) {
+            // remove oldest
+            _recentPaces.removeAt(0);
+
+            // compare average and goal
+            if(average(_recentPaces) > widget.goalPace + 15){
+              print('Alert: Too fast!');
+              _audioPlayer.play(AssetSource('audio/too_fast.mp3'));
+              _recentPaces.clear();
+            }
+            else if(average(_recentPaces) < widget.goalPace - 15){
+              print('Alert: Too slow!');
+              _audioPlayer.play(AssetSource('audio/too_slow.mp3'));
+              _recentPaces.clear();
+            }
+          }
+        }
+
+        print('經緯度: ${position.latitude}, ${position.longitude}');
+        print('速度: ${position.speed} m/s');
         setState(() {});
       }
     });
@@ -106,11 +132,15 @@ class _RunPageState extends State<RunPage> {
 
   void _pauseTracking() {
     setState(() {
+      // palse
       if (!_isPaused && _activeStartTime != null) {
         _activeDuration += DateTime.now().difference(_activeStartTime!);
         _activeStartTime = null;
+        _lastPosition = null;
         _timer?.cancel();
-      } else {
+      }
+      // continue
+      else {
         _activeStartTime = DateTime.now();
         _timer = Timer.periodic(const Duration(seconds: 1), (_) {
           setState(() {});
@@ -154,8 +184,6 @@ class _RunPageState extends State<RunPage> {
       'start_time': today.toIso8601String(),
       'duration_seconds': _activeDuration.inSeconds,
       'distance_km': _totalDistance / 1000,
-      'start_latitude': 0.0,
-      'start_longitude': 0.0,
       'end_latitude': 0.0,
       'end_longitude': 0.0,
       'average_pace_seconds_per_km': _totalDistance > 0 ? (_activeDuration.inSeconds / (_totalDistance / 1000)).round() : 0,
