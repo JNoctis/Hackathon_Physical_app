@@ -33,10 +33,13 @@ class MyApp extends StatelessWidget {
       home: const LoginPage(),
       routes: {
         '/login': (context) => const LoginPage(),
-        '/instruction': (context) => classify(),
         '/history': (context) {
             final username = ModalRoute.of(context)!.settings.arguments as String;
             return HistoryPage(username: username);
+          },
+          '/instruction': (context) {
+            final username = ModalRoute.of(context)!.settings.arguments as String;
+            return classify(username: username);
           },
       },
     );
@@ -56,7 +59,7 @@ class _MainPageState extends State<MainPage> {
 
   void _onItemTapped(int index) {
     if (index == 0) {
-      Navigator.pushNamed(context, '/instruction');
+      Navigator.pushNamed(context, '/instruction', arguments: widget.username);
     } else if (index == 1) {
     setState(() {
         _selectedIndex = 1;
