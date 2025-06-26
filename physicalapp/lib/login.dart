@@ -44,11 +44,12 @@ class _LoginPageState extends State<LoginPage> {
       final userId = data['user_id'];
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt('user_id', userId);
+      await prefs.setString('username', email);
 
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => MainPage(username: email), // ✅ 將登入的 username 傳遞下去
+          builder: (context) => MainPage(),
         ),
       );
     } else {

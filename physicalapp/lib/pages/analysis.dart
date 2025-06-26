@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 
 class ReportCardPage extends StatefulWidget {
-  final String username;
 
-  const ReportCardPage({super.key, required this.username});
+  const ReportCardPage({super.key});
 
   @override
   State<ReportCardPage> createState() => _ReportCardPageState();

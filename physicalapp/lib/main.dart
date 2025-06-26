@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'pages/analysis.dart';
+import 'instruction.dart';
 import 'pages/history.dart';
 import 'pages/run.dart';
 import 'login.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import '../utils/time_format.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,21 +39,21 @@ class MyApp extends StatelessWidget {
       routes: {
         '/login': (context) => const LoginPage(),
         '/history': (context) {
-            final username = ModalRoute.of(context)!.settings.arguments as String;
-            return HistoryPage(username: username);
-          },
-          '/instruction': (context) {
-            final username = ModalRoute.of(context)!.settings.arguments as String;
-            return ReportCardPage(username: username);
-          },
+          return HistoryPage();
+        },
+        '/analysis': (context) {
+          return ReportCardPage();
+        },
+        '/instruction': (context) {
+          return ClassifyPage();
+        },
       },
     );
   }
 }
 
 class MainPage extends StatefulWidget {
-  final String username;
-  const MainPage({super.key, required this.username});
+  const MainPage({super.key});
 
   @override
   State<MainPage> createState() => _MainPageState();
@@ -56,10 +61,34 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   int _selectedIndex = 1;
+  double curr_goal_dist = 0;
+  int curr_goal_pace = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    getGoal();
+  }
+
+  Future<void> getGoal() async {
+  final prefs = await SharedPreferences.getInstance();
+  final userId = prefs.getInt('user_id');
+  final response = await http.get(
+    Uri.parse('${dotenv.env['BASE_URL']}/goal/${userId}'),
+  );
+
+  if (response.statusCode == 200) {
+    final data = jsonDecode(response.body);
+    setState(() {
+      curr_goal_dist = data['goal_dist'];
+      curr_goal_pace = data['goal_pace'];
+    });
+  }
+}
 
   void _onItemTapped(int index) {
     if (index == 0) {
-      Navigator.pushNamed(context, '/instruction', arguments: widget.username);
+      Navigator.pushNamed(context, '/analysis');
     } else if (index == 1) {
     setState(() {
         _selectedIndex = 1;
@@ -68,7 +97,7 @@ class _MainPageState extends State<MainPage> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => HistoryPage(username: widget.username), // ✅ 傳遞 username
+          builder: (context) => HistoryPage(),
         ),
       );
     }
@@ -76,8 +105,15 @@ class _MainPageState extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
+    // check questionare
+    if (curr_goal_dist < 0) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.pushReplacementNamed(context, '/instruction');
+      });
+    }
+
     return Scaffold(
-      body: const HomePage(),
+      body: HomePage(currGoalDist: curr_goal_dist, currGoalPace: curr_goal_pace),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
@@ -105,7 +141,14 @@ class _MainPageState extends State<MainPage> {
 }
 
 class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+  final double currGoalDist;
+  final int currGoalPace;
+
+  const HomePage({
+    super.key,
+    required this.currGoalDist,
+    required this.currGoalPace,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -118,9 +161,15 @@ class HomePage extends StatelessWidget {
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: const [
-              _InfoBox(title: 'Distance', value: '5 km'),
-              _InfoBox(title: 'Pace', value: '6 min/km'),
+            children: [
+              _InfoBox(
+                title: 'Distance',
+                value: '${currGoalDist.toStringAsFixed(1)} km',
+              ),
+              _InfoBox(
+                title: 'Pace',
+                value: '${SecondsToPace(currGoalPace.toDouble())} /km',
+              ),
             ],
           ),
           const SizedBox(height: 24),
@@ -170,7 +219,7 @@ class HomePage extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const RunPage(goalDistance: 5, goalPace: 6), // 輸入目標距離
+                  builder: (context) => RunPage(goalDistance: currGoalDist, goalPace: currGoalPace.toDouble()),
                 ),
               );
             },
