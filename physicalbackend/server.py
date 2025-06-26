@@ -17,31 +17,15 @@ PAST_ACCESS_ACT_NUM = 10
 RATIO_UPDATE_SPEED = 0.5
 RATIO_UPDATE_LENGTH = 0.7
 
-
-# cd \Hackathon_Physical_app\physicalbackend
-# set FLASK_APP=server.py
-# flask init-db
-# python server.py
-
-# Import db and models from database.py
-from database import db, User, Activity, init_db_command
-
 # Initialize Flask app
 app = Flask(__name__)
 CORS(app) # Enable CORS for all routes
 
-# Database Configuration
-# Use PostgreSQL for production, SQLite for development for simplicity
-# Example for PostgreSQL: 'postgresql://user:password@host:port/database_name'
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///site.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialize db with the Flask app
 db.init_app(app)
-
-# --- Custom Flask CLI Command for Database Initialization ---
-# Register the init_db_command with the Flask app's CLI
-app.cli.add_command(click.command("init-db")(init_db_command))
 
 # --- Custom Flask CLI Command for Database Initialization ---
 # Register the init_db_command with the Flask app's CLI
@@ -118,15 +102,18 @@ def add_activity():
             start_time=start_time,
             duration_seconds=data['duration_seconds'],
             distance_km=data['distance_km'],
-            start_latitude=data.get('start_latitude'),
-            start_longitude=data.get('start_longitude'),
             end_latitude=data.get('end_latitude'),
             end_longitude=data.get('end_longitude'),
             average_pace_seconds_per_km=data['average_pace_seconds_per_km'],
-            split_paces_json=split_paces_json_string
+            split_paces_json=split_paces_json_string,
+            goal_state = data.get('goal_state'),
+            goal_dist = data.get('goal_dist'),
+            goal_pace = data.get('goal_pace')
         )
         db.session.add(new_activity)
         db.session.commit()
+        # update goal
+        update_trait_after_run()
         return jsonify({'message': 'Activity added successfully', 'activity_id': new_activity.id}), 201
     except ValueError:
         return jsonify({'message': 'Invalid date format for start_time. Use ISO format (YYYY-MM-DDTHH:MM:SS)'}), 400
@@ -261,6 +248,11 @@ def update_trait_after_run():
 
 
 if __name__ == '__main__':
-    # You would typically run Flask apps using `flask run` or a WSGI server like Gunicorn.
-    # The `flask init-db` command should be run separately via the CLI.
+    # Use Power Shell：run_server.ps1
+    # Use CMD        ：run_backend.bat 
+
+    # For Local 
     app.run(host="127.0.0.1", port="5000", debug=True)
+    # For Workshop
+    # app.run(debug=True)
+    
