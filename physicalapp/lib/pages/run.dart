@@ -11,7 +11,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class RunPage extends StatefulWidget {
   final double goalDistance;
-  const RunPage({super.key, required this.goalDistance});
+  final double goalSpeed;
+  const RunPage({super.key, required this.goalDistance, required this.goalSpeed});
 
   @override
   State<RunPage> createState() => _RunPageState();
@@ -87,7 +88,7 @@ class _RunPageState extends State<RunPage> {
           _totalDistance += distance;
           _distanceSinceLastSplit += distance;
 
-          // calculate 1km speed
+          // calculate time period
           if (_distanceSinceLastSplit >= 1000.0) {
             final currentElapsed = _activeDuration + 
                 (_activeStartTime == null ? Duration.zero : DateTime.now().difference(_activeStartTime!));
@@ -101,7 +102,7 @@ class _RunPageState extends State<RunPage> {
 
         }
         _lastPosition = position;
-        _speed = position.speed;
+        _speed = KmhToPace(position.speed);
         print('緯度: ${position.latitude}');
         print('經度: ${position.longitude}');
         print('速度: ${position.speed} km/h');
@@ -222,10 +223,7 @@ class _RunPageState extends State<RunPage> {
                 Column(
                   children: [
                     const Text('Pace', style: TextStyle(fontSize: 16)),
-                    Text(
-                      KmhToPace(_speed),
-                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                    ),
+                    Text(_speed, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                   ],
                 ),
               ],
