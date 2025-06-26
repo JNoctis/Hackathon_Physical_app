@@ -394,7 +394,7 @@ class _HistoryDayPageState extends State<HistoryDayPage> {
                                     // Total Time
                                     _buildMetricCard(
                                       label: 'Total Time',
-                                      value: SecondsToPace(activity.durationSeconds.toDouble()),
+                                      value: SecondsToTime(activity.durationSeconds.toDouble()),
                                       border: boxBorder,
                                       context: context,
                                       isWide: true,
