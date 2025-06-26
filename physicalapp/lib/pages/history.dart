@@ -3,6 +3,7 @@ import 'history_day.dart';
 import '../main.dart';         // 為了能使用 MainPage
 import 'instruction.dart';    // 為了能使用 classify()
 
+
 class HistoryPage extends StatefulWidget {
   final String username;
 
@@ -15,6 +16,7 @@ class HistoryPage extends StatefulWidget {
 class _HistoryPageState extends State<HistoryPage> {
   late DateTime _currentMonth;
   int _selectedIndex = 2; // History tab index
+
 
   @override
   void initState() {
@@ -123,6 +125,7 @@ class _HistoryPageState extends State<HistoryPage> {
                     minimumSize: const Size(0, 36),
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
+                );
                 ),
               ],
             ),
