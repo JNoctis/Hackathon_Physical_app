@@ -5,7 +5,7 @@ from flask_cors import CORS
 import json
 from datetime import datetime
 import click # Import click for custom commands
-from sqlalchemy import desc
+from sqlalchemy import desc, func # Import func for date filtering
 import copy
 
 # Import db and models from database.py
@@ -102,6 +102,7 @@ def add_activity():
             start_time=start_time,
             duration_seconds=data['duration_seconds'],
             distance_km=data['distance_km'],
+            # 不再從請求中獲取 start_latitude 和 start_longitude，因為模型中沒有它們
             end_latitude=data.get('end_latitude'),
             end_longitude=data.get('end_longitude'),
             average_pace_seconds_per_km=data['average_pace_seconds_per_km'],
@@ -138,15 +139,62 @@ def get_user_activities(user_id):
             'start_time': activity.start_time.isoformat(),  # Convert datetime to ISO string
             'duration_seconds': activity.duration_seconds,
             'distance_km': activity.distance_km,
-            'start_latitude': activity.start_latitude,
-            'start_longitude': activity.start_longitude,
+            # 移除回傳 start_latitude 和 start_longitude
             'end_latitude': activity.end_latitude,
             'end_longitude': activity.end_longitude,
             'average_pace_seconds_per_km': activity.average_pace_seconds_per_km,
             'split_paces': split_paces,
-            'created_at': activity.created_at.isoformat()
+            # 移除 'created_at'，因為 Activity 模型中沒有這個欄位
+            # 'created_at': activity.created_at.isoformat() if activity.created_at else None, 
+            'goal_state': activity.goal_state, # Include goal_state
+            'goal_dist': activity.goal_dist,   # Include goal_dist
+            'goal_pace': activity.goal_pace    # Include goal_pace
         })
     return jsonify(output), 200
+
+# NEW API: Get activities for a specific user and date
+@app.route('/activities_by_date/<int:user_id>/<string:date_str>', methods=['GET'])
+def get_activities_by_date(user_id, date_str):
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'message': 'User not found'}), 404
+
+    try:
+        # Parse the date string into a datetime object for comparison
+        # Assuming date_str is in 'YYYY-MM-DD' format
+        target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+    except ValueError:
+        return jsonify({'message': 'Invalid date format. Use YYYY-MM-DD'}), 400
+
+    # Query activities for the specific user and date
+    activities = Activity.query.filter(
+        Activity.user_id == user_id,
+        func.date(Activity.start_time) == target_date
+    ).order_by(Activity.start_time.desc()).all()
+
+    output = []
+    for activity in activities:
+        split_paces = json.loads(activity.split_paces_json) if activity.split_paces_json else []
+
+        output.append({
+            'id': activity.id,
+            'user_id': activity.user_id,
+            'start_time': activity.start_time.isoformat(),
+            'duration_seconds': activity.duration_seconds,
+            'distance_km': activity.distance_km,
+            # 移除回傳 start_latitude 和 start_longitude
+            'end_latitude': activity.end_latitude,
+            'end_longitude': activity.end_longitude,
+            'average_pace_seconds_per_km': activity.average_pace_seconds_per_km,
+            'split_paces': split_paces,
+            # 移除 'created_at'，因為 Activity 模型中沒有這個欄位
+            # 'created_at': activity.created_at.isoformat() if activity.created_at else None, 
+            'goal_state': activity.goal_state,
+            'goal_dist': activity.goal_dist,
+            'goal_pace': activity.goal_pace
+        })
+    return jsonify(output), 200
+
 
 @app.route('/finish_questionare', methods=['POST'])
 def finish_questionare():
@@ -247,10 +295,9 @@ def update_trait_after_run():
 
 if __name__ == '__main__':
     # Use Power Shell：run_server.ps1
-    # Use CMD        ：run_backend.bat 
+    # Use CMD         ：run_backend.bat 
 
     # For Local 
     app.run(host="127.0.0.1", port="5000", debug=True)
     # For Workshop
     # app.run(debug=True)
-    
