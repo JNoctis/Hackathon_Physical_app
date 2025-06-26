@@ -102,7 +102,6 @@ def add_activity():
             start_time=start_time,
             duration_seconds=data['duration_seconds'],
             distance_km=data['distance_km'],
-            # 不再從請求中獲取 start_latitude 和 start_longitude，因為模型中沒有它們
             end_latitude=data.get('end_latitude'),
             end_longitude=data.get('end_longitude'),
             average_pace_seconds_per_km=data['average_pace_seconds_per_km'],
@@ -114,7 +113,7 @@ def add_activity():
         db.session.add(new_activity)
         db.session.commit()
         # update goal
-        update_trait_after_run()
+        update_trait_after_run(data)
         return jsonify({'message': 'Activity added successfully', 'activity_id': new_activity.id}), 201
     except ValueError:
         return jsonify({'message': 'Invalid date format for start_time. Use ISO format (YYYY-MM-DDTHH:MM:SS)'}), 400
@@ -141,13 +140,10 @@ def get_user_activities(user_id):
             'start_time': activity.start_time.isoformat(),  # Convert datetime to ISO string
             'duration_seconds': activity.duration_seconds,
             'distance_km': activity.distance_km,
-            # 移除回傳 start_latitude 和 start_longitude
             'end_latitude': activity.end_latitude,
             'end_longitude': activity.end_longitude,
             'average_pace_seconds_per_km': activity.average_pace_seconds_per_km,
             'split_paces': split_paces,
-            # 移除 'created_at'，因為 Activity 模型中沒有這個欄位
-            # 'created_at': activity.created_at.isoformat() if activity.created_at else None, 
             'goal_state': activity.goal_state, # Include goal_state
             'goal_dist': activity.goal_dist,   # Include goal_dist
             'goal_pace': activity.goal_pace    # Include goal_pace
@@ -184,13 +180,10 @@ def get_activities_by_date(user_id, date_str):
             'start_time': activity.start_time.isoformat(),
             'duration_seconds': activity.duration_seconds,
             'distance_km': activity.distance_km,
-            # 移除回傳 start_latitude 和 start_longitude
             'end_latitude': activity.end_latitude,
             'end_longitude': activity.end_longitude,
             'average_pace_seconds_per_km': activity.average_pace_seconds_per_km,
             'split_paces': split_paces,
-            # 移除 'created_at'，因為 Activity 模型中沒有這個欄位
-            # 'created_at': activity.created_at.isoformat() if activity.created_at else None, 
             'goal_state': activity.goal_state,
             'goal_dist': activity.goal_dist,
             'goal_pace': activity.goal_pace
@@ -231,65 +224,51 @@ def finish_questionare():
     return jsonify({'message': 'Trait created successfully'}), 201
 
 
-
-@app.route('/update_trait_after_run', methods=['POST'])
-def update_trait_after_run():
-    data = request.json
+def update_trait_after_run(data):
     user_id = data.get('user_id')
-
-    if not user_id:
-        return jsonify({'error': 'Missing user_id'}), 400
 
     trait = Trait.query.filter_by(user_id=user_id).first()
     if not trait or not trait.curr_goal:
-        return jsonify({'error': 'Trait or curr_goal not found'}), 404
+        return
 
-    curr_goal = copy.deepcopy(trait.curr_goal)
-    curr_speed_sec = curr_goal.get("speed") * 60  # 使用秒來比對（speed 是 min/km）
-    curr_length = curr_goal.get("length")  # 單位：km
+    original_goal = trait.curr_goal.copy()
+    new_goal = trait.curr_goal
+    curr_goal_pace = new_goal['pace']
+    curr_goal_dist = new_goal['dist']
 
-    if curr_speed_sec is None or curr_length is None:
-        return jsonify({'error': 'curr_goal missing speed or length'}), 400
+    if curr_goal_pace is None or curr_goal_dist is None:
+        return
 
     # 抓最近 n 次活動
     activities = Activity.query.filter_by(user_id=user_id)\
         .order_by(desc(Activity.start_time)).limit(PAST_ACCESS_ACT_NUM).all()
 
     if not activities:
-        return jsonify({'message': 'No recent activities'}), 200
+        return
 
     faster_count = 0
     longer_count = 0
 
     for act in activities:
         if act.average_pace_seconds_per_km and act.distance_km:
-            if act.average_pace_seconds_per_km < curr_speed_sec:
+            if act.average_pace_seconds_per_km < curr_goal_pace:
                 faster_count += 1
-            if act.distance_km >= curr_length:
+            if act.distance_km >= curr_goal_dist:
                 longer_count += 1
 
     updated = False
 
     if faster_count / len(activities) >= RATIO_UPDATE_SPEED:
-        print(faster_count / len(activities))
-        new_speed = curr_goal["speed"] - 30  # 減少 30 秒（0.5 分）
-        curr_goal["speed"] = max(new_speed, 160)  # 不讓配速過快
+        new_goal['pace'] = max(curr_goal_pace - 30, 160) # 減少 30 秒（0.5 分), 不讓配速過快
         updated = True
 
     if longer_count / len(activities) >= RATIO_UPDATE_LENGTH:
-        curr_goal["length"] = round(curr_goal["length"] + 1.0, 1)
+        new_goal['dist'] = round(curr_goal_dist + 1.0, 1)
         updated = True
 
     if updated:
-        print (trait.curr_goal, curr_goal)
-        trait.curr_goal = curr_goal
+        print(original_goal, new_goal)
         db.session.commit()
-        return jsonify({
-            'message': 'Trait updated',
-            'updated_curr_goal': trait.curr_goal
-        }), 200
-    else:
-        return jsonify({'message': 'No update needed'}), 200
 
 # get today goal
 @app.route('/goal/<int:user_id>', methods=['GET'])

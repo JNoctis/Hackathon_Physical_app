@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 from sqlalchemy.dialects.postgresql import JSON
+from sqlalchemy.ext.mutable import MutableDict
 
 # Initialize SQLAlchemy outside of app context for flexibility
 db = SQLAlchemy()
@@ -56,8 +57,8 @@ def init_db_command():
 class Trait(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, unique=True)
-    long_goal = db.Column(JSON, nullable=True)
-    curr_goal = db.Column(JSON, nullable=True)
+    long_goal = db.Column(MutableDict.as_mutable(JSON), nullable=True)
+    curr_goal = db.Column(MutableDict.as_mutable(JSON), nullable=True)
     # ex 
     # goal = {
     #   "dist": 5.0, 
