@@ -47,5 +47,7 @@
 	<true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>需要取得你的定位來測量速度</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>App需要持續取得定位以計算運動速度</string>
 </dict>
 </plist>

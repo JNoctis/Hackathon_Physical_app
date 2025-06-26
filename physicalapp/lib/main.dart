@@ -158,7 +158,7 @@ class HomePage extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const RunPage(goalDistance: 5), // 輸入目標距離
+                  builder: (context) => const RunPage(goalDistance: 5, goalPace: 6), // 輸入目標距離
                 ),
               );
             },

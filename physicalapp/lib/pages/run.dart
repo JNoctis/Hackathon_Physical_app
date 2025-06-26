@@ -11,14 +11,15 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class RunPage extends StatefulWidget {
   final double goalDistance;
-  const RunPage({super.key, required this.goalDistance});
+  final double goalPace;
+  const RunPage({super.key, required this.goalDistance, required this.goalPace});
 
   @override
   State<RunPage> createState() => _RunPageState();
 }
 
 class _RunPageState extends State<RunPage> {
-  double _speed = 0.0;
+  double _pace = 0.0;
   StreamSubscription<Position>? _positionStream;
   bool _isPaused = false;
   Duration _activeDuration = Duration.zero;
@@ -30,13 +31,6 @@ class _RunPageState extends State<RunPage> {
   final List<Duration> _splits = [];
   Duration _lastSplitElapsed = Duration.zero;
   final random = Random(1);
-
-  // calculate speed
-  String KmhToPace(double speedKmh) {
-    if (speedKmh <= 0) return "--'--\"";
-    final paceSeconds = 3600 / speedKmh;
-    return SecondsToPace(paceSeconds);
-  }
 
   @override
   void initState() {
@@ -63,24 +57,7 @@ class _RunPageState extends State<RunPage> {
     _isPaused = false;
 
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!_isPaused) {
-
-        // ---RANDOM TESTING---
-        final distance = random.nextDouble() * 100;
-        _totalDistance += distance;
-        _distanceSinceLastSplit += distance;
-          if (_distanceSinceLastSplit >= 1000.0) {
-            final currentElapsed = _activeDuration + 
-                (_activeStartTime == null ? Duration.zero : DateTime.now().difference(_activeStartTime!));
-            
-            final splitDuration = currentElapsed - _lastSplitElapsed;
-            _splits.add(splitDuration);
-
-            _lastSplitElapsed = currentElapsed;
-            _distanceSinceLastSplit = 0.0;
-          }
-          // ---RANDOM TESTING---
-
+      if (!_isPaused && _activeStartTime != null) {
         setState(() {});
       }
     });
@@ -104,7 +81,7 @@ class _RunPageState extends State<RunPage> {
           _totalDistance += distance;
           _distanceSinceLastSplit += distance;
 
-          // calculate 1km speed
+          // calculate time period
           if (_distanceSinceLastSplit >= 1000.0) {
             final currentElapsed = _activeDuration + 
                 (_activeStartTime == null ? Duration.zero : DateTime.now().difference(_activeStartTime!));
@@ -118,10 +95,10 @@ class _RunPageState extends State<RunPage> {
 
         }
         _lastPosition = position;
-        _speed = position.speed * 3.6;
+        _pace = position.speed == 0 ? -1 : 3600 / position.speed;
         print('緯度: ${position.latitude}');
         print('經度: ${position.longitude}');
-        print('速度: ${position.speed} m/s');
+        print('速度: ${position.speed} km/h');
         setState(() {});
       }
     });
@@ -168,9 +145,7 @@ class _RunPageState extends State<RunPage> {
     _timer = null;
 
     // generate json
-    final today = DateTime.now();
-    final dateStr = '${today.year}/${today.month.toString().padLeft(2, '0')}/${today.day.toString().padLeft(2, '0')}';
-    
+    final today = DateTime.now();    
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getInt('user_id');
 
@@ -179,10 +154,10 @@ class _RunPageState extends State<RunPage> {
       'start_time': today.toIso8601String(),
       'duration_seconds': _activeDuration.inSeconds,
       'distance_km': _totalDistance / 1000,
-      'start_latitude': 0,
-      'start_longitude': 0,
-      'end_latitude': 0,
-      'end_longitude': 0,
+      'start_latitude': 0.0,
+      'start_longitude': 0.0,
+      'end_latitude': 0.0,
+      'end_longitude': 0.0,
       'average_pace_seconds_per_km': _totalDistance > 0 ? (_activeDuration.inSeconds / (_totalDistance / 1000)).round() : 0,
       'split_paces': _splits.map((d) => d.inSeconds).toList()
     };
@@ -190,7 +165,7 @@ class _RunPageState extends State<RunPage> {
     await sendRunDataToBackend(runData);
 
     setState(() {
-      _speed = 0.0;
+      _pace = 0.0;
       _activeDuration = Duration.zero;
       _activeStartTime = null;
       _isPaused = false;
@@ -223,7 +198,7 @@ class _RunPageState extends State<RunPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Time & Speed
+            // Time & Pace
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -240,7 +215,7 @@ class _RunPageState extends State<RunPage> {
                   children: [
                     const Text('Pace', style: TextStyle(fontSize: 16)),
                     Text(
-                      KmhToPace(_speed),
+                      SecondsToPace(_pace),
                       style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                     ),
                   ],
