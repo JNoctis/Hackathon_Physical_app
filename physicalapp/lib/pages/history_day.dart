@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:convert';
 import 'package:intl/intl.dart'; // For date formatting
-
-// Assume a base URL for your backend API
-const String backendBaseUrl = 'http://127.0.0.1:5000'; // Please update with your actual backend address
 
 // For individual split pace data from backend
 class RawSpeedSplit {
@@ -140,7 +138,7 @@ class _HistoryDayPageState extends State<HistoryDayPage> {
     });
 
     final formattedDate = DateFormat('yyyy-MM-dd').format(widget.selectedDate);
-    final url = Uri.parse('$backendBaseUrl/activities_by_date/${widget.userId}/$formattedDate');
+    final url = Uri.parse('${dotenv.env['BASE_URL']}/activities_by_date/${widget.userId}/$formattedDate');
 
     try {
       final response = await http.get(url);
