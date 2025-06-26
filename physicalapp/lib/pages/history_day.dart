@@ -5,9 +5,6 @@ import 'dart:convert';
 import 'package:intl/intl.dart'; // For date formatting
 import 'package:shared_preferences/shared_preferences.dart';
 
-// Assume a base URL for your backend API
-const String backendBaseUrl = 'http://127.0.0.1:5000'; // Please update with your actual backend address
-
 // For individual split pace data from backend
 class RawSpeedSplit {
   final int km;
@@ -157,8 +154,7 @@ class _HistoryDayPageState extends State<HistoryDayPage> {
     });
 
     final formattedDate = DateFormat('yyyy-MM-dd').format(widget.selectedDate);
-    final url = Uri.parse('${dotenv.env['BASE_URL']}/activities_by_date/${widget.userId}/$formattedDate');
-    final url = Uri.parse('$backendBaseUrl/activities_by_date/$_userId/$formattedDate');
+    final url = Uri.parse('${dotenv.env['BASE_URL']}/activities_by_date/$_userId/$formattedDate');
 
     try {
       final response = await http.get(url);
