@@ -60,7 +60,7 @@ class Trait(db.Model):
     curr_goal = db.Column(JSON, nullable=True)
     # ex 
     # goal = {
-    #   "length": 5000,
+    #   "length": 5.0,
     #   "speed": 10,
     #   "weight": 60
     # }
