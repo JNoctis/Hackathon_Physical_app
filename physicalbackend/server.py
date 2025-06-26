@@ -5,6 +5,23 @@ from flask_cors import CORS
 import json
 from datetime import datetime
 import click # Import click for custom commands
+from sqlalchemy import desc
+import copy
+
+# Import db and models from database.py
+from database import db, User, Activity, init_db_command, Trait
+from flask_cors import CORS
+
+# Constants for updating performance
+PAST_ACCESS_ACT_NUM = 10
+RATIO_UPDATE_SPEED = 0.5
+RATIO_UPDATE_LENGTH = 0.7
+
+
+# cd \Hackathon_Physical_app\physicalbackend
+# set FLASK_APP=server.py
+# flask init-db
+# python server.py
 
 # Import db and models from database.py
 from database import db, User, Activity, init_db_command
@@ -26,6 +43,9 @@ db.init_app(app)
 # Register the init_db_command with the Flask app's CLI
 app.cli.add_command(click.command("init-db")(init_db_command))
 
+# --- Custom Flask CLI Command for Database Initialization ---
+# Register the init_db_command with the Flask app's CLI
+app.cli.add_command(click.command("init-db")(init_db_command))
 
 # --- API Endpoints ---
 
@@ -49,6 +69,7 @@ def register():
     new_user.set_password(password)
     db.session.add(new_user)
     db.session.commit()
+    
     return jsonify({'message': 'User registered successfully'}), 201
 
 
@@ -65,7 +86,7 @@ def login():
         return jsonify({'message': 'Login successful', 'user_id': user.id}), 200
     return jsonify({'message': 'Invalid credentials'}), 401
 
-
+# add one act at once
 @app.route('/activities', methods=['POST'])
 def add_activity():
     data = request.get_json()
@@ -141,6 +162,102 @@ def get_user_activities(user_id):
             'created_at': activity.created_at.isoformat()
         })
     return jsonify(output), 200
+
+@app.route('/finish_questionare', methods=['POST'])
+def finish_questionare():
+    data = request.json
+    user_id = data.get('user_id')
+
+    if not user_id:
+        return jsonify({'error': 'Missing user_id'}), 400
+
+    # 防止重複建立 Trait
+    if Trait.query.filter_by(user_id=user_id).first():
+        return jsonify({'message': 'Trait already exists'}), 409
+
+    # 擷取問卷資料
+    long_goal = data.get('long_goal', {})
+    curr_goal = data.get('curr_goal', {})
+    usually_quit = data.get('usually_quit', False)
+    now_quit = data.get('now_quit', False)
+    believe_ai = data.get('believe_ai', True)
+
+    # 建立 Trait 實例
+    trait = Trait(
+        user_id=user_id,
+        long_goal=long_goal,
+        curr_goal=curr_goal,
+        usually_quit=usually_quit,
+        now_quit=now_quit,
+        believe_ai=believe_ai
+    )
+
+    # 儲存到資料庫
+    db.session.add(trait)
+    db.session.commit()
+
+    return jsonify({'message': 'Trait created successfully'}), 201
+
+
+
+@app.route('/update_trait_after_run', methods=['POST'])
+def update_trait_after_run():
+    data = request.json
+    user_id = data.get('user_id')
+
+    if not user_id:
+        return jsonify({'error': 'Missing user_id'}), 400
+
+    trait = Trait.query.filter_by(user_id=user_id).first()
+    if not trait or not trait.curr_goal:
+        return jsonify({'error': 'Trait or curr_goal not found'}), 404
+
+    curr_goal = copy.deepcopy(trait.curr_goal)
+    curr_speed_sec = curr_goal.get("speed") * 60  # 使用秒來比對（speed 是 min/km）
+    curr_length = curr_goal.get("length")  # 單位：km
+
+    if curr_speed_sec is None or curr_length is None:
+        return jsonify({'error': 'curr_goal missing speed or length'}), 400
+
+    # 抓最近 n 次活動
+    activities = Activity.query.filter_by(user_id=user_id)\
+        .order_by(desc(Activity.start_time)).limit(PAST_ACCESS_ACT_NUM).all()
+
+    if not activities:
+        return jsonify({'message': 'No recent activities'}), 200
+
+    faster_count = 0
+    longer_count = 0
+
+    for act in activities:
+        if act.average_pace_seconds_per_km and act.distance_km:
+            if act.average_pace_seconds_per_km < curr_speed_sec:
+                faster_count += 1
+            if act.distance_km >= curr_length:
+                longer_count += 1
+
+    updated = False
+
+    if faster_count / len(activities) >= RATIO_UPDATE_SPEED:
+        print(faster_count / len(activities))
+        new_speed = curr_goal["speed"] - 30  # 減少 30 秒（0.5 分）
+        curr_goal["speed"] = max(new_speed, 160)  # 不讓配速過快
+        updated = True
+
+    if longer_count / len(activities) >= RATIO_UPDATE_LENGTH:
+        curr_goal["length"] = round(curr_goal["length"] + 1.0, 1)
+        updated = True
+
+    if updated:
+        print (trait.curr_goal, curr_goal)
+        trait.curr_goal = curr_goal
+        db.session.commit()
+        return jsonify({
+            'message': 'Trait updated',
+            'updated_curr_goal': trait.curr_goal
+        }), 200
+    else:
+        return jsonify({'message': 'No update needed'}), 200
 
 
 if __name__ == '__main__':

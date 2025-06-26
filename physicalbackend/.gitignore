@@ -6,3 +6,6 @@ instance/
 
 # .vscode settings
 .vscode/
+
+# Python bytecode files
+__pycache__/

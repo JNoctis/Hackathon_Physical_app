@@ -2,6 +2,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
+from sqlalchemy.dialects.postgresql import JSON
 
 # Initialize SQLAlchemy outside of app context for flexibility
 db = SQLAlchemy()
@@ -51,3 +52,28 @@ def init_db_command():
     db.drop_all() # Optional: Use with caution, it deletes all data!
     db.create_all()
     print("Initialized the database.")
+        
+class Trait(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, unique=True)
+    long_goal = db.Column(JSON, nullable=True)
+    curr_goal = db.Column(JSON, nullable=True)
+    # ex 
+    # goal = {
+    #   "length": 5000,
+    #   "speed": 10,
+    #   "weight": 60
+    # }
+
+    # current = {
+    #   "length": 3000,
+    #   "speed": 8,
+    #   "weight": 65
+    # }
+    usually_quit = db.Column(db.Boolean, default=False)
+    now_quit = db.Column(db.Boolean, default=False)
+    believe_ai = db.Column(db.Boolean, default=True)
+    
+
+    def __repr__(self):
+        return f'<Activity {self.id} for User {self.user_id}>'
