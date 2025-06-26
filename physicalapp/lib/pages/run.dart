@@ -162,13 +162,13 @@ class _RunPageState extends State<RunPage> with SingleTickerProviderStateMixin {
 
   String check_goal(){
     if(_totalDistance < widget.goalDistance){
-      return "Failed";
+      return "missed";
     }
     int average_pace = _totalDistance > 0 ? (_activeDuration.inSeconds / (_totalDistance / 1000)).round() : 0;
     if(average_pace <= widget.goalPace){
-      return "Done";
+      return "completed";
     }
-    return "Failed";
+    return "missed";
   }
 
   void _stopTracking() async {
