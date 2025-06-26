@@ -84,7 +84,7 @@ class _ReportCardPageState extends State<ReportCardPage> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                const SizedBox(height: 20),
+                const SizedBox(height: 30),
                 const Text('82%', style: TextStyle(color: Colors.white)),
               ],
             ),
