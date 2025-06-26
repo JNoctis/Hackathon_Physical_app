@@ -102,7 +102,7 @@ class _RunPageState extends State<RunPage> {
 
         }
         _lastPosition = position;
-        _speed = KmhToPace(position.speed);
+        _speed = position.speed;
         print('緯度: ${position.latitude}');
         print('經度: ${position.longitude}');
         print('速度: ${position.speed} km/h');
@@ -223,7 +223,10 @@ class _RunPageState extends State<RunPage> {
                 Column(
                   children: [
                     const Text('Pace', style: TextStyle(fontSize: 16)),
-                    Text(_speed, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                    Text(
+                      KmhToPace(_speed),
+                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    ),
                   ],
                 ),
               ],
