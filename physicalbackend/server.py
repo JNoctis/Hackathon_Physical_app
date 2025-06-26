@@ -201,7 +201,7 @@ def get_activities_by_date(user_id, date_str):
 @app.route('/finish_questionare', methods=['POST'])
 def finish_questionare():
     data = request.json
-    user_id = data.get('user_id')
+    user_id = int(data.get('user_id'))
 
     if not user_id:
         return jsonify({'error': 'Missing user_id'}), 400
@@ -210,22 +210,19 @@ def finish_questionare():
     if Trait.query.filter_by(user_id=user_id).first():
         return jsonify({'message': 'Trait already exists'}), 409
 
-    # 擷取問卷資料
-    long_goal = data.get('long_goal', {})
-    curr_goal = data.get('curr_goal', {})
-    usually_quit = data.get('usually_quit', False)
-    now_quit = data.get('now_quit', False)
-    believe_ai = data.get('believe_ai', True)
+    # ========== IMPLEMENT TRANSFER ANSWERS TO GOAL ==========
+    print(data)
 
     # 建立 Trait 實例
     trait = Trait(
         user_id=user_id,
-        long_goal=long_goal,
-        curr_goal=curr_goal,
-        usually_quit=usually_quit,
-        now_quit=now_quit,
-        believe_ai=believe_ai
+        long_goal={"dist":10.0, "pace":450, "weight":60},
+        curr_goal={"dist":25.0, "pace":390, "weight":50},
+        usually_quit=False,
+        now_quit=False,
+        believe_ai=False
     )
+    # ========== IMPLEMENT TRANSFER ANSWERS TO GOAL ==========
 
     # 儲存到資料庫
     db.session.add(trait)
