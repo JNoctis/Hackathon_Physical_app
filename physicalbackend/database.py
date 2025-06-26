@@ -49,7 +49,7 @@ class Activity(db.Model):
 
 def init_db_command():
     """Clear existing data and create new tables."""
-    db.drop_all() # Optional: Use with caution, it deletes all data!
+    # db.drop_all() # Optional: Use with caution, it deletes all data!
     db.create_all()
     print("Initialized the database.")
         
