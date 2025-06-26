@@ -60,15 +60,15 @@ class Trait(db.Model):
     curr_goal = db.Column(JSON, nullable=True)
     # ex 
     # goal = {
-    #   "length": 5000,
-    #   "speed": 10,
+    #   "dist": 5.0, 
+    #   "pace": 300,
     #   "weight": 60
     # }
 
     # current = {
-    #   "length": 3000,
-    #   "speed": 8,
-    #   "weight": 65
+    #   "dist": 5.0, 
+    #   "pace": 300,
+    #   "weight": 60
     # }
     usually_quit = db.Column(db.Boolean, default=False)
     now_quit = db.Column(db.Boolean, default=False)
