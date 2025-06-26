@@ -200,7 +200,6 @@ class _HistoryPageState extends State<HistoryPage> {
 
     // Navigate to respective pages
     if (index == 0) {
-      // Assuming ReportCardPage does not need username/userId directly from HistoryPage
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -208,12 +207,10 @@ class _HistoryPageState extends State<HistoryPage> {
         ),
       );
     } else if (index == 1) {
-      // Assuming MainPage does not need username/userId directly from HistoryPage
-      Navigator.pushReplacement(
+      Navigator.pushNamedAndRemoveUntil(
         context,
-        MaterialPageRoute(
-          builder: (context) => MainPage(),
-        ),
+        '/main',
+        (route) => false,
       );
     }
     // No action needed for index 2 (HistoryPage itself)
@@ -295,6 +292,26 @@ class _HistoryPageState extends State<HistoryPage> {
                                       color: const Color.fromARGB(255, 7, 7, 7),
                                       fontWeight: FontWeight.bold,
                                     ),
+                              ),
+                              ElevatedButton.icon(
+                                onPressed: () {
+                                  Navigator.pushNamed(context, '/instruction');
+                                },
+                                icon: const Icon(Icons.help_outline, size: 18),
+                                label: const Text(
+                                  'Instruction',
+                                  style: TextStyle(fontSize: 14),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.blueGrey,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  minimumSize: const Size(0, 36),
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                ),
                               ),
                               ElevatedButton.icon(
                                 onPressed: () {

@@ -14,8 +14,8 @@ from flask_cors import CORS
 
 # Constants for updating performance
 PAST_ACCESS_ACT_NUM = 10
-RATIO_UPDATE_SPEED = 0.5
-RATIO_UPDATE_LENGTH = 0.7
+RATIO_UPGRADE_SPEED = 0.5
+RATIO_UPGRADE_LENGTH = 0.7
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -112,8 +112,11 @@ def add_activity():
         )
         db.session.add(new_activity)
         db.session.commit()
+
         # update goal
-        update_trait_after_run(data)
+        if data['distance_km'] != 0 and data['average_pace_seconds_per_km'] != 0:
+            update_trait_after_run(user_id)
+
         return jsonify({'message': 'Activity added successfully', 'activity_id': new_activity.id}), 201
     except ValueError:
         return jsonify({'message': 'Invalid date format for start_time. Use ISO format (YYYY-MM-DDTHH:MM:SS)'}), 400
@@ -199,9 +202,11 @@ def finish_questionare():
     if not user_id:
         return jsonify({'error': 'Missing user_id'}), 400
 
-    # 防止重複建立 Trait
-    if Trait.query.filter_by(user_id=user_id).first():
-        return jsonify({'message': 'Trait already exists'}), 409
+    # if trait exist, delete old.
+    old_trait = Trait.query.filter_by(user_id=user_id).first()
+    if old_trait:
+        db.session.delete(old_trait)
+        db.session.commit()
 
     # ========== IMPLEMENT TRANSFER ANSWERS TO GOAL ==========
     print(data)
@@ -209,8 +214,8 @@ def finish_questionare():
     # 建立 Trait 實例
     trait = Trait(
         user_id=user_id,
-        long_goal={"dist":10.0, "pace":450, "weight":60},
-        curr_goal={"dist":25.0, "pace":390, "weight":50},
+        long_goal={"dist":25.0, "pace":350, "weight":60},
+        curr_goal={"dist":20.0, "pace":450, "weight":70},
         usually_quit=False,
         now_quit=False,
         believe_ai=False
@@ -224,9 +229,7 @@ def finish_questionare():
     return jsonify({'message': 'Trait created successfully'}), 201
 
 
-def update_trait_after_run(data):
-    user_id = data.get('user_id')
-
+def update_trait_after_run(user_id):
     trait = Trait.query.filter_by(user_id=user_id).first()
     if not trait or not trait.curr_goal:
         return
@@ -235,6 +238,9 @@ def update_trait_after_run(data):
     new_goal = trait.curr_goal
     curr_goal_pace = new_goal['pace']
     curr_goal_dist = new_goal['dist']
+
+    long_goal_pace = trait.long_goal['pace']
+    long_goal_dist = trait.long_goal['dist']
 
     if curr_goal_pace is None or curr_goal_dist is None:
         return
@@ -246,29 +252,53 @@ def update_trait_after_run(data):
     if not activities:
         return
 
-    faster_count = 0
-    longer_count = 0
+    faster_count = []
+    longer_count = []
 
     for act in activities:
         if act.average_pace_seconds_per_km and act.distance_km:
             if act.average_pace_seconds_per_km < curr_goal_pace:
-                faster_count += 1
+                faster_count.append(1)
+            else:
+                faster_count.append(0)
             if act.distance_km >= curr_goal_dist:
-                longer_count += 1
+                longer_count.append(1)
+            else:
+                longer_count.append(0)
 
-    updated = False
+    # Adjusting Algorithm
+    # Upgrade conditions
+    # Pace
+    if (sum(faster_count) / len(faster_count) >= RATIO_UPGRADE_SPEED) and (faster_count[0] == 1):
+        # If today completed and success rate more than RATIO_UPGRADE_SPEED.
+        # Reduce 15s until long-term goal is achieved.
+        new_goal['pace'] = max(curr_goal_pace - 15, long_goal_pace)
+    # Distance
+    if (sum(longer_count) / len(longer_count) >= RATIO_UPGRADE_LENGTH) and (longer_count[0] == 1):
+        # If today completed and success rate more than RATIO_UPGRADE_LENGTH.
+        # Add 1km until long-term goal is achieved.
+        new_goal['dist'] = min(round(curr_goal_dist + 1.0, 1), long_goal_dist)
 
-    if faster_count / len(activities) >= RATIO_UPDATE_SPEED:
-        new_goal['pace'] = max(curr_goal_pace - 30, 160) # 減少 30 秒（0.5 分), 不讓配速過快
-        updated = True
+    # Downgrade conditions
+    # Pace
+    # If fail continuously, be downgraded gradually.
+    consecutive_failures = 0
+    for i in faster_count:
+        if(i == 0): consecutive_failures += 1
+        else: break
+    if(consecutive_failures > 1):
+        new_goal['pace'] = min(curr_goal_pace + (consecutive_failures - 1) * 10, 900)
+    # Distance
+    # If fail continuously, be downgraded gradually.
+    consecutive_failures = 0
+    for i in longer_count:
+        if(i == 0): consecutive_failures += 1
+        else: break
+    if(consecutive_failures > 1):
+        new_goal['dist'] = max(curr_goal_dist - (consecutive_failures - 1) * 0.5, 1)
 
-    if longer_count / len(activities) >= RATIO_UPDATE_LENGTH:
-        new_goal['dist'] = round(curr_goal_dist + 1.0, 1)
-        updated = True
-
-    if updated:
-        print(original_goal, new_goal)
-        db.session.commit()
+    print(original_goal, new_goal)
+    db.session.commit()
 
 # get today goal
 @app.route('/goal/<int:user_id>', methods=['GET'])

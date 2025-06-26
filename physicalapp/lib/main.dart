@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../utils/time_format.dart';
+import 'package:flutter/services.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,15 +39,10 @@ class MyApp extends StatelessWidget {
       home: const LoginPage(),
       routes: {
         '/login': (context) => const LoginPage(),
-        '/history': (context) {
-          return HistoryPage();
-        },
-        '/analysis': (context) {
-          return ReportCardPage();
-        },
-        '/instruction': (context) {
-          return ClassifyPage();
-        },
+        '/history': (context) => HistoryPage(),
+        '/analysis': (context) => ReportCardPage(),
+        '/instruction': (context) => ClassifyPage(),
+        '/main': (context) => MainPage(),
       },
     );
   }
@@ -133,7 +129,11 @@ class _MainPageState extends State<MainPage> {
       
       ),
     ),
-      body: HomePage(currGoalDist: curr_goal_dist, currGoalPace: curr_goal_pace),
+      body: HomePage(
+        key: ValueKey('$curr_goal_dist-$curr_goal_pace'), // ✅ 確保更新
+        currGoalDist: curr_goal_dist,
+        currGoalPace: curr_goal_pace,
+      ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
@@ -160,7 +160,7 @@ class _MainPageState extends State<MainPage> {
   }
 }
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   final double currGoalDist;
   final int currGoalPace;
 
@@ -171,25 +171,52 @@ class HomePage extends StatelessWidget {
   });
 
   @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  late TextEditingController _distController;
+  late TextEditingController _minController;
+  late TextEditingController _secController;
+
+  @override
+  void initState() {
+    super.initState();
+    _distController = TextEditingController(text: widget.currGoalDist.toStringAsFixed(1));
+    final pace = widget.currGoalPace;
+    _minController = TextEditingController(text: (pace ~/ 60).toString());
+    _secController = TextEditingController(text: (pace % 60).toString().padLeft(2, '0'));
+  }
+
+  @override
+  void dispose() {
+    _distController.dispose();
+    _minController.dispose();
+    _secController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Container(
-      width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+      width: double.infinity,
       color: const Color(0xFFF7FAFC),
       child: Column(
-        
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _InfoBox(
+              _EditableBox(
                 title: 'Distance',
-                value: '${currGoalDist.toStringAsFixed(1)} km',
+                controller: _distController,
+                unit: ' km',
               ),
-              _InfoBox(
+              _PaceInputBox(
                 title: 'Pace',
-                value: '${SecondsToPace(currGoalPace.toDouble())} /km',
+                minuteController: _minController,
+                secondController: _secController,
               ),
             ],
           ),
@@ -198,7 +225,6 @@ class HomePage extends StatelessWidget {
             'This goal is recommended based on your previous pace and distance to improve endurance.',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 16, color: Colors.black87),
-            
           ),
           const Spacer(),
           ElevatedButton(
@@ -211,12 +237,22 @@ class HomePage extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 18),
             ),
             onPressed: () {
+              final dist = double.tryParse(_distController.text);
+              final min = int.tryParse(_minController.text);
+              final sec = int.tryParse(_secController.text);
+              final validDist = (dist != null && dist > 0) ? dist : widget.currGoalDist;
+              final validMin = (min != null) ? min : 0;
+              final validSec = (sec != null) ? sec : 0;
+              final paceInSeconds = validMin > 0
+                  ? (validMin * 60 + validSec)
+                  : widget.currGoalPace;
+
               Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => RunPage(
-                    goalDistance: currGoalDist,
-                    goalPace: currGoalPace.toDouble(),
+                    goalDistance: validDist,
+                    goalPace: paceInSeconds.toDouble(),
                   ),
                 ),
               );
@@ -233,6 +269,162 @@ class HomePage extends StatelessWidget {
   }
 }
 
+class _EditableBox extends StatelessWidget {
+  final String title;
+  final TextEditingController controller;
+  final String unit;
+
+  const _EditableBox({
+    required this.title,
+    required this.controller,
+    required this.unit,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 155,
+      height: 155,
+      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          )
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(title, style: const TextStyle(fontSize: 16, color: Colors.black54)),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              SizedBox(
+                width: 50,
+                child: TextField(
+                  controller: controller,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'^\d{0,2}(\.\d?)?'))
+                  ],
+                  textAlign: TextAlign.right,
+                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    isDense: true,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+              ),
+              Text(
+                unit,
+                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PaceInputBox extends StatelessWidget {
+  final String title;
+  final TextEditingController minuteController;
+  final TextEditingController secondController;
+
+  const _PaceInputBox({
+    required this.title,
+    required this.minuteController,
+    required this.secondController,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 155,
+      height: 155,
+      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          )
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(title, style: const TextStyle(fontSize: 16, color: Colors.black54)),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _TimeField(controller: minuteController, maxValue: 19),
+              const Text("'", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+              _TimeField(controller: secondController, maxValue: 59),
+              const Text('"/km', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TimeField extends StatelessWidget {
+  final TextEditingController controller;
+  final int? maxValue;
+
+  const _TimeField({required this.controller, this.maxValue});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 36,
+      child: TextField(
+        controller: controller,
+        keyboardType: TextInputType.number,
+        inputFormatters: [
+          FilteringTextInputFormatter.digitsOnly,
+          LengthLimitingTextInputFormatter(2),
+        ],
+        onChanged: (value) {
+          if (maxValue != null) {
+            final parsed = int.tryParse(value);
+            if (parsed != null && parsed > maxValue!) {
+              controller.text = maxValue.toString();
+              controller.selection = TextSelection.fromPosition(
+                TextPosition(offset: controller.text.length),
+              );
+            }
+          }
+        },
+        textAlign: TextAlign.right,
+        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        decoration: const InputDecoration(
+          border: InputBorder.none,
+          isDense: true,
+          contentPadding: EdgeInsets.zero,
+        ),
+      ),
+    );
+  }
+}
+
 class _InfoBox extends StatelessWidget {
   final String title;
   final String value;
@@ -242,8 +434,8 @@ class _InfoBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 140,
-      height: 140,
+      width: 155,
+      height: 155,
       margin: const EdgeInsets.symmetric(vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,

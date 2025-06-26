@@ -225,7 +225,9 @@ class _RunPageState extends State<RunPage> with SingleTickerProviderStateMixin {
         (_activeStartTime == null ? Duration.zero : DateTime.now().difference(_activeStartTime!));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Running')),
+        appBar: AppBar(title: const Text('Running'),
+        automaticallyImplyLeading: false,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
