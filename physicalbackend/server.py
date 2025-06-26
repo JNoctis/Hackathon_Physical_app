@@ -128,6 +128,8 @@ def add_activity():
         )
         db.session.add(new_activity)
         db.session.commit()
+        # update goal
+        update_trait_after_run()
         return jsonify({'message': 'Activity added successfully', 'activity_id': new_activity.id}), 201
     except ValueError:
         return jsonify({'message': 'Invalid date format for start_time. Use ISO format (YYYY-MM-DDTHH:MM:SS)'}), 400
