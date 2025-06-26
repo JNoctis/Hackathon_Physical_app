@@ -6,6 +6,7 @@ from datetime import datetime
 import json
 import click # Import click for custom commands
 from flask_cors import CORS
+from sqlalchemy.dialects.postgresql import JSON
 
 # cd \Hackathon_Physical_app\physicalbackend
 # set FLASK_APP=server.py
@@ -65,7 +66,12 @@ class Activity(db.Model):
     def __repr__(self):
         return f'<Activity {self.id} for User {self.user_id}>'
 
-
+class Trait(db.Model):
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    catagory = db.Colum(db.Text, default='healthy') # fast, long, healthy
+    goal = db.Column(JSON, nullable=True)
+    current = db.Column(JSON, nullable=True)
+    
 # --- API Endpoints ---
 
 @app.route('/register', methods=['POST'])
@@ -219,6 +225,58 @@ def init_db_command():
     db.drop_all() # Optional: Use with caution, it deletes all data!
     db.create_all()
     click.echo("Initialized the database.")
+
+@app.route('/first_login', methods=['POST'])
+def first_login():
+    data = request.json
+    user_id = data.get('user_id')
+
+    if not user_id:
+        return jsonify({'error': 'Missing user_id'}), 400
+
+    # 從資料庫撈該使用者的所有紀錄
+    activities = Activity.query.filter_by(user_id=user_id).all()
+
+    if not activities:
+        return jsonify({'error': 'No activities found'}), 404
+
+    # 計算總距離與總時間
+    total_distance = sum([a.distance_km for a in activities])
+    total_time = sum([a.time_minute for a in activities])
+
+    avg_pace = total_time / total_distance if total_distance > 0 else 0
+
+    return jsonify({
+        'total_distance_km': round(total_distance, 2),
+        'total_time_min': round(total_time, 2),
+        'average_pace_min_per_km': round(avg_pace, 2)
+    })
+
+@app.route('/run_complete', methods=['POST'])
+def run_complete():
+    data = request.json
+    user_id = data.get('user_id')
+
+    if not user_id:
+        return jsonify({'error': 'Missing user_id'}), 400
+
+    # 從資料庫撈該使用者的所有紀錄
+    activities = Activity.query.filter_by(user_id=user_id).all()
+
+    if not activities:
+        return jsonify({'error': 'No activities found'}), 404
+
+    # 計算總距離與總時間
+    total_distance = sum([a.distance_km for a in activities])
+    total_time = sum([a.time_minute for a in activities])
+
+    avg_pace = total_time / total_distance if total_distance > 0 else 0
+
+    return jsonify({
+        'total_distance_km': round(total_distance, 2),
+        'total_time_min': round(total_time, 2),
+        'average_pace_min_per_km': round(avg_pace, 2)
+    })
 
 if __name__ == '__main__':
     # Removed db.create_all() from here, as it's now handled by the CLI command
