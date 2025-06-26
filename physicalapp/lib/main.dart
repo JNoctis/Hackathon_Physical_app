@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'pages/instruction.dart';
+import 'pages/analysis.dart';
 import 'pages/history.dart';
 import 'pages/run.dart';
 import 'login.dart';
@@ -39,7 +39,7 @@ class MyApp extends StatelessWidget {
           },
           '/instruction': (context) {
             final username = ModalRoute.of(context)!.settings.arguments as String;
-            return classify(username: username);
+            return ReportCardPage(username: username);
           },
       },
     );
@@ -88,7 +88,7 @@ class _MainPageState extends State<MainPage> {
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.info),
-            label: 'Instruction',
+            label: 'Analysis',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.directions_run),

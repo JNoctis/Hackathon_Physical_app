@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'history_day.dart';
 import '../main.dart';         // 為了能使用 MainPage
-import 'instruction.dart';    // 為了能使用 classify()
+import 'analysis.dart';    // 為了能使用 classify()
 
 class HistoryPage extends StatefulWidget {
   final String username;
@@ -30,7 +30,7 @@ class _HistoryPageState extends State<HistoryPage> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => classify(username: widget.username),
+          builder: (context) => ReportCardPage(username: widget.username),
         ),
       );
     } else if (index == 1) {
@@ -197,7 +197,7 @@ class _HistoryPageState extends State<HistoryPage> {
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.info),
-            label: 'Instruction',
+            label: 'Analysis',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.directions_run),

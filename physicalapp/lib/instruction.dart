@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:physicalapp/main.dart';
+import 'package:physicalapp/pages/history.dart';
+class classify extends StatefulWidget {
+  final String username;
 
-class DecisionTreePage extends StatefulWidget {
-  const DecisionTreePage({super.key});
+  const classify({super.key, required this.username});
 
   @override
-  _DecisionTreePageState createState() => _DecisionTreePageState();
+  _classifyState createState() => _classifyState();
 }
 
-class _DecisionTreePageState extends State<DecisionTreePage> {
+class _classifyState extends State<classify> {
   String? currentQuestionId = 'g1';
   Map<String, String> answers = {};
   List<String> questionHistory = ['g1'];
@@ -203,6 +206,31 @@ class _DecisionTreePageState extends State<DecisionTreePage> {
       currentQuestionIndex = 0;
     });
   }
+  int _selectedIndex = 0;
+
+  void _onItemTapped(int index) {
+    if (index == _selectedIndex) return;
+    setState(() => _selectedIndex = index);
+
+    if (index == 0) {
+      // 當前頁面
+    } else if (index == 1) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => MainPage(username: widget.username),
+        ),
+      );
+    } else if (index == 2) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => HistoryPage(username: widget.username),
+        ),
+      );
+    }
+  }
+ 
 
   @override
   Widget build(BuildContext context) {
@@ -212,8 +240,15 @@ class _DecisionTreePageState extends State<DecisionTreePage> {
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Text('You have completed all the questions!', style: TextStyle(fontSize: 24)),
+              Center(
+                child: Text(
+                  'You have completed all the questions!',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 24, color: Colors.white),
+                ),
+              ),
               SizedBox(height: 16),
               ElevatedButton(onPressed: restart, child: Text('Restart')),
             ],
@@ -228,50 +263,52 @@ class _DecisionTreePageState extends State<DecisionTreePage> {
 
     return Scaffold(
       appBar: AppBar(title: Text('Conditional Questionnaire')),
-      body: Column(
-        children: [
-          SizedBox(
-            height: 120,
-            child: Center(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
                 child: Text(
                   question,
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: const Color.fromARGB(255, 255, 254, 254)),
                 ),
               ),
-            ),
-          ),
-          Center(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: options.map((option) {
-                final key = '$currentQuestionId-$option';
-                final isInputRequired = inputRequiredOptions.contains(key);
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                alignment: WrapAlignment.center,
+                children: options.map((option) {
+                  final key = '$currentQuestionId-$option';
+                  final isInputRequired = inputRequiredOptions.contains(key);
 
-                return Container(
-                  width: 160,
-                  height: 160,
-                  margin: const EdgeInsets.symmetric(horizontal: 8),
-                  color: Colors.grey[300],
-                  child: InkWell(
-                    onTap: () => selectOption(option),
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
+                  return Container(
+                    width: MediaQuery.of(context).size.width * 0.8,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: InkWell(
+                      onTap: () => selectOption(option),
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text(option, style: TextStyle(fontSize: 18)),
+                          Text(
+                            option,
+                            style: TextStyle(fontSize: 18, color: Colors.black),
+                          ),
                           if (isInputRequired && pendingInputTrigger == key)
                             ...getInputFields(key).map((field) {
                               final subKey = '$key-${field['key']}';
                               final controller = inputControllers.putIfAbsent(
                                   subKey, () => TextEditingController());
                               return Padding(
-                                padding: const EdgeInsets.only(top: 6.0),
+                                padding: const EdgeInsets.only(top: 8.0),
                                 child: TextField(
                                   controller: controller,
+                                  style: TextStyle(color: Colors.black),
                                   decoration: InputDecoration(
                                     hintText: field['hint'],
                                     border: OutlineInputBorder(),
@@ -283,27 +320,49 @@ class _DecisionTreePageState extends State<DecisionTreePage> {
                         ],
                       ),
                     ),
-                  ),
-                );
-              }).toList(),
-            ),
+                  );
+                }).toList(),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 24),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ElevatedButton(
+                      onPressed: currentQuestionIndex > 0 ? goToPrevious : null,
+                      child: Text('Previous'),
+                    ),
+                    SizedBox(width: 20),
+                    ElevatedButton(
+                      onPressed: currentQuestionIndex < questionHistory.length - 1 ? goToNext : null,
+                      child: Text('Next'),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton(
-                  onPressed: currentQuestionIndex > 0 ? goToPrevious : null,
-                  child: Text('Previous'),
-                ),
-                SizedBox(width: 20),
-                ElevatedButton(
-                  onPressed: currentQuestionIndex < questionHistory.length - 1 ? goToNext : null,
-                  child: Text('Next'),
-                ),
-              ],
-            ),
+        ),
+      ),
+    bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: Colors.deepPurpleAccent,
+        unselectedItemColor: Colors.grey,
+        backgroundColor: const Color(0xFF1E1E1E),
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.info),
+            label: 'Analysis',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.directions_run),
+            label: 'Run',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.history),
+            label: 'History',
           ),
         ],
       ),
