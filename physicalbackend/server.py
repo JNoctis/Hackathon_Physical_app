@@ -17,31 +17,15 @@ PAST_ACCESS_ACT_NUM = 10
 RATIO_UPDATE_SPEED = 0.5
 RATIO_UPDATE_LENGTH = 0.7
 
-
-# cd \Hackathon_Physical_app\physicalbackend
-# set FLASK_APP=server.py
-# flask init-db
-# python server.py
-
-# Import db and models from database.py
-from database import db, User, Activity, init_db_command
-
 # Initialize Flask app
 app = Flask(__name__)
 CORS(app) # Enable CORS for all routes
 
-# Database Configuration
-# Use PostgreSQL for production, SQLite for development for simplicity
-# Example for PostgreSQL: 'postgresql://user:password@host:port/database_name'
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///site.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialize db with the Flask app
 db.init_app(app)
-
-# --- Custom Flask CLI Command for Database Initialization ---
-# Register the init_db_command with the Flask app's CLI
-app.cli.add_command(click.command("init-db")(init_db_command))
 
 # --- Custom Flask CLI Command for Database Initialization ---
 # Register the init_db_command with the Flask app's CLI

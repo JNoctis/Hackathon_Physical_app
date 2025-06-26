@@ -169,6 +169,17 @@ class _RunPageState extends State<RunPage> {
     }
   }
 
+  String check_goal(){
+    if(_totalDistance < widget.goalDistance){
+      return "Failed";
+    }
+    int average_pace = _totalDistance > 0 ? (_activeDuration.inSeconds / (_totalDistance / 1000)).round() : 0;
+    if(average_pace <= widget.goalPace){
+      return "Done";
+    }
+    return "Failed";
+  }
+
   void _stopTracking() async {
     _positionStream?.cancel();
     _timer?.cancel();
@@ -188,7 +199,10 @@ class _RunPageState extends State<RunPage> {
       'end_latitude': 0.0,
       'end_longitude': 0.0,
       'average_pace_seconds_per_km': _totalDistance > 0 ? (_activeDuration.inSeconds / (_totalDistance / 1000)).round() : 0,
-      'split_paces': _splits.map((d) => d.inSeconds).toList()
+      'split_paces': _splits.map((d) => d.inSeconds).toList(),
+      'goal_state': check_goal(),
+      'goal_dist': widget.goalDistance,
+      'goal_pace':  widget.goalPace.toInt()
     };
 
     await sendRunDataToBackend(runData);
