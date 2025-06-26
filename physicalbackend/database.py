@@ -2,6 +2,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
+from sqlalchemy.dialects.postgresql import JSON
 
 # Initialize SQLAlchemy outside of app context for flexibility
 db = SQLAlchemy()
@@ -53,18 +54,26 @@ def init_db_command():
     print("Initialized the database.")
         
 class Trait(db.Model):
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    start_time = db.Column(db.DateTime, nullable=False)
-    duration_seconds = db.Column(db.Integer, nullable=False)
-    distance_km = db.Column(db.Float, nullable=False)
-    start_latitude = db.Column(db.Float, nullable=True)
-    start_longitude = db.Column(db.Float, nullable=True)
-    end_latitude = db.Column(db.Float, nullable=True)
-    end_longitude = db.Column(db.Float, nullable=True)
-    average_pace_seconds_per_km = db.Column(db.Integer, nullable=False)
-    # Using db.Text to store JSON string. For PostgreSQL, consider JSONB.
-    split_paces_json = db.Column(db.Text, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, unique=True)
+    long_goal = db.Column(JSON, nullable=True)
+    curr_goal = db.Column(JSON, nullable=True)
+    # ex 
+    # goal = {
+    #   "length": 5000,
+    #   "speed": 10,
+    #   "weight": 60
+    # }
+
+    # current = {
+    #   "length": 3000,
+    #   "speed": 8,
+    #   "weight": 65
+    # }
+    usually_quit = db.Column(db.Boolean, default=False)
+    now_quit = db.Column(db.Boolean, default=False)
+    believe_ai = db.Column(db.Boolean, default=True)
+    
 
     def __repr__(self):
         return f'<Activity {self.id} for User {self.user_id}>'
