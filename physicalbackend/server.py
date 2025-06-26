@@ -262,6 +262,11 @@ def update_trait_after_run():
 
 
 if __name__ == '__main__':
-    # You would typically run Flask apps using `flask run` or a WSGI server like Gunicorn.
-    # The `flask init-db` command should be run separately via the CLI.
+    # Use Power Shell：run_server.ps1
+    # Use CMD        ：run_backend.bat 
+
+    # For Local 
     app.run(host="127.0.0.1", port="5000", debug=True)
+    # For Workshop
+    # app.run(debug=True)
+    
