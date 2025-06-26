@@ -18,30 +18,26 @@ class HistoryDayPage extends StatelessWidget {
   // Add a required DateTime parameter to receive the selected date
   final DateTime selectedDate;
 
-  // Update the constructor to receive selectedDate
-  const HistoryDayPage({super.key, required this.selectedDate});
+  // 新增一個變數來保存從後端取得的目標狀態
+  // 這裡使用 String 作為範例，實際應用中可能會是 Enum 或其他更具體的類型
+  final String goalStatus; // 可以是 "Done", "Missed", "None" (或 null)
+
+  // Update the constructor to receive selectedDate and goalStatus
+  const HistoryDayPage({
+    super.key,
+    required this.selectedDate,
+    this.goalStatus = 'None', // 預設值為 'None'，表示尚未設定或取得狀態
+  });
 
   // Example data (you can fetch real data from your database or API)
   // activityDate is now dynamically generated based on selectedDate
   String get activityDate => "${selectedDate.year}/${selectedDate.month}/${selectedDate.day}";
-  final String totalDistance = "10.0";
-  final String avgSpeed = "5'30\"";
-  final String totalTime = "55:00.12";
+  final String totalDistance = "0.0";
+  final String avgSpeed = "0'00\"";
+  final String totalTime = "00:00.00";
 
   // This list is now constant because the SpeedSplit class has a const constructor
-  final List<SpeedSplit> speedSplits = const [
-    SpeedSplit(km: 1, speed: "5'45\"", difference: "+15\""),
-    SpeedSplit(km: 2, speed: "5'40\"", difference: "+10\""),
-    SpeedSplit(km: 3, speed: "5'30\"", difference: "0\""),
-    SpeedSplit(km: 4, speed: "5'25\"", difference: "-5\""),
-    SpeedSplit(km: 5, speed: "5'20\"", difference: "-10\""),
-    SpeedSplit(km: 6, speed: "5'15\"", difference: "-15\""),
-    SpeedSplit(km: 7, speed: "5'25\"", difference: "-5\""),
-    SpeedSplit(km: 8, speed: "5'30\"", difference: "0\""),
-    SpeedSplit(km: 9, speed: "5'35\"", difference: "+5\""),
-    SpeedSplit(km: 10, speed: "5'30\"", difference: "0\""),
-  ];
-
+  final List<SpeedSplit> speedSplits = const [];
 
   @override
   Widget build(BuildContext context) {
@@ -55,6 +51,24 @@ class HistoryDayPage extends StatelessWidget {
       color: colorScheme.primary.withOpacity(0.8),
       width: 2.0,
     );
+
+    // 根據 goalStatus 決定顯示的顏色
+    Color statusColor;
+    String statusText;
+    switch (goalStatus) {
+      case 'Done':
+        statusColor = Colors.green;
+        statusText = 'Goal: Done';
+        break;
+      case 'Missed':
+        statusColor = Colors.red;
+        statusText = 'Goal: Missed';
+        break;
+      default:
+        statusColor = Colors.grey;
+        statusText = 'Goal: Not Set'; // 或您可以設定為空字串不顯示
+        break;
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -79,6 +93,25 @@ class HistoryDayPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24.0),
+
+            // 新增的目標狀態顯示欄位
+            Container(
+              padding: const EdgeInsets.all(12.0),
+              decoration: BoxDecoration(
+                color: statusColor.withOpacity(0.2), // 淺色背景
+                borderRadius: BorderRadius.circular(8.0),
+                border: Border.all(color: statusColor),
+              ),
+              child: Text(
+                statusText,
+                textAlign: TextAlign.center,
+                style: textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: statusColor,
+                ),
+              ),
+            ),
+            const SizedBox(height: 24.0), // 添加間距
 
             // Middle data summary (Distance & Speed)
             Row(

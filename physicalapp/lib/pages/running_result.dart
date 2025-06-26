@@ -26,8 +26,8 @@ class RunningResultPage extends StatelessWidget {
   DateTime get startTime => DateTime.parse(runData['start_time']);
   String get activityDate => '${startTime.year}/${startTime.month.toString().padLeft(2, '0')}/${startTime.day.toString().padLeft(2, '0')}';
   String get totalDistance => (runData['distance_km'] as num).toStringAsFixed(2);
-  String get avgSpeed => SecondsToPace(runData['average_pace_seconds_per_km']);
-  String get totalTime => SecondsToTime(runData['duration_seconds']);
+  String get avgSpeed => SecondsToPace((runData['average_pace_seconds_per_km'] as num).toDouble());
+  String get totalTime => SecondsToPace((runData['duration_seconds'] as num).toDouble());
 
   // This list is now constant because the SpeedSplit class has a const constructor
   List<SpeedSplit> get speedSplits {

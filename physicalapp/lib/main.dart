@@ -32,6 +32,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData.dark(),
       home: const LoginPage(),
       routes: {
+        '/login': (context) => const LoginPage(),
         '/instruction': (context) => classify(),
         '/history': (context) => const HistoryPage(),
       },
@@ -157,7 +158,7 @@ class HomePage extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const RunPage(goalDistance: 5, goalSpeed: 6), // 輸入目標距離
+                  builder: (context) => const RunPage(goalDistance: 5, goalPace: 6), // 輸入目標距離
                 ),
               );
             },
