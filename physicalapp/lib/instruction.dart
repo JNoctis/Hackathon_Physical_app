@@ -244,7 +244,7 @@ class _ClassifyState extends State<ClassifyPage> {
                     body: jsonEncode(answers),
                   );
 
-                  if (response.statusCode == 201) {
+                  if (response.statusCode == 201 || response.statusCode == 409) {
                     // success
                     if (context.mounted) {
                       Navigator.of(context).pushReplacement(

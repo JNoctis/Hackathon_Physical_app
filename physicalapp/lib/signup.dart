@@ -43,7 +43,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
       if (response.statusCode == 200) {
         _showMessage('Sign up successful!');
-        Navigator.pop(context);
+        Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
       } else {
         final body = jsonDecode(response.body);
         _showMessage(body['message'] ?? 'Sign up failed');
