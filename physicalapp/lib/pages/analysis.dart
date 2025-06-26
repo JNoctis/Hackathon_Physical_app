@@ -47,18 +47,18 @@ class _ReportCardPageState extends State<ReportCardPage> {
                       color: Colors.white,
                     ),
                   ),
-                  TextSpan(
-                    text: '養成者',
-                    style: TextStyle(
-                      fontSize: 20,
-                      color: Colors.white,
-                    ),
-                  ),
+                  // TextSpan(
+                  //   text: '養成者',
+                  //   style: TextStyle(
+                  //     fontSize: 20,
+                  //     color: Colors.white,
+                  //   ),
+                  // ),
                 ],
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
