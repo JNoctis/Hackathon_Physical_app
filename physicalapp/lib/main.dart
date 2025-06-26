@@ -34,14 +34,18 @@ class MyApp extends StatelessWidget {
       routes: {
         '/login': (context) => const LoginPage(),
         '/instruction': (context) => classify(),
-        '/history': (context) => const HistoryPage(),
+        '/history': (context) {
+            final username = ModalRoute.of(context)!.settings.arguments as String;
+            return HistoryPage(username: username);
+          },
       },
     );
   }
 }
 
 class MainPage extends StatefulWidget {
-  const MainPage({super.key});
+  final String username;
+  const MainPage({super.key, required this.username});
 
   @override
   State<MainPage> createState() => _MainPageState();
@@ -58,7 +62,12 @@ class _MainPageState extends State<MainPage> {
         _selectedIndex = 1;
       });
     } else if (index == 2) {
-      Navigator.pushNamed(context, '/history');
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => HistoryPage(username: widget.username), // ✅ 傳遞 username
+        ),
+      );
     }
   }
 
