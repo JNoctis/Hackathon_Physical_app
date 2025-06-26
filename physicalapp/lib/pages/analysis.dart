@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class ReportCardPage extends StatefulWidget {
 
@@ -8,9 +11,43 @@ class ReportCardPage extends StatefulWidget {
   State<ReportCardPage> createState() => _ReportCardPageState();
 }
 
+final baseUrl = dotenv.env['BASE_URL'] ?? '';
+
+Future<Map<String, dynamic>> getAnalysis(int userId) async {
+  final url = Uri.parse('$baseUrl/analysis/$userId');
+  try {
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body) as Map<String, dynamic>;
+      print(const JsonEncoder.withIndent('  ').convert(data));
+      return data;
+    } else {
+      throw Exception('取得資料失敗，狀態碼：${response.statusCode}');
+    }
+  } catch (e) {
+    print('解析錯誤: $e');
+    rethrow; // 讓呼叫端也能捕捉錯誤
+  }
+}
+
+
 class _ReportCardPageState extends State<ReportCardPage> {
+  late Future<Map<String, dynamic>> analysisFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    analysisFuture = getAnalysis(101); // 載入 user_id=101 的分析資料
+  }
+  
+  
+  
   @override
   Widget build(BuildContext context) {
+
+
+
     return Scaffold(
       backgroundColor: const Color(0xFF1C132B),
       appBar: AppBar(
