@@ -16,3 +16,17 @@ String SecondsToPace(double seconds) {
   final int second = totalSeconds % 60;
   return "${minute.toString().padLeft(2, '0')}'${second.toString().padLeft(2, '0')}\"";
 }
+
+// seconds to pace (X'XX" or XX")
+String SecondsToSimplePace(double seconds) {
+  if (seconds <= 0 || seconds > 1200) return "--'--\"";
+  final int totalSeconds = seconds.round();
+  final int minute = totalSeconds ~/ 60;
+  final int second = totalSeconds % 60;
+
+  if (minute == 0) {
+    return '$second"';
+  } else {
+    return "$minute'${second.toString().padLeft(2, '0')}\"";
+  }
+}
