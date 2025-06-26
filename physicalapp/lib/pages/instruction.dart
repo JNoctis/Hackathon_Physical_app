@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
-
+import 'package:physicalapp/main.dart';
+import 'package:physicalapp/pages/history.dart';
 class classify extends StatefulWidget {
-  const classify({super.key});
+  final String username;
+
+  const classify({super.key, required this.username});
 
   @override
   _classifyState createState() => _classifyState();
@@ -203,6 +206,31 @@ class _classifyState extends State<classify> {
       currentQuestionIndex = 0;
     });
   }
+  int _selectedIndex = 0;
+
+  void _onItemTapped(int index) {
+    if (index == _selectedIndex) return;
+    setState(() => _selectedIndex = index);
+
+    if (index == 0) {
+      // 當前頁面
+    } else if (index == 1) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => MainPage(username: widget.username),
+        ),
+      );
+    } else if (index == 2) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => HistoryPage(username: widget.username),
+        ),
+      );
+    }
+  }
+ 
 
   @override
   Widget build(BuildContext context) {
@@ -245,7 +273,7 @@ class _classifyState extends State<classify> {
                 child: Text(
                   question,
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black),
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: const Color.fromARGB(255, 255, 254, 254)),
                 ),
               ),
               Wrap(
@@ -315,6 +343,28 @@ class _classifyState extends State<classify> {
             ],
           ),
         ),
+      ),
+    bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: Colors.deepPurpleAccent,
+        unselectedItemColor: Colors.grey,
+        backgroundColor: const Color(0xFF1E1E1E),
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.info),
+            label: 'Instruction',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.directions_run),
+            label: 'Run',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.history),
+            label: 'History',
+          ),
+        ],
       ),
     );
   }
