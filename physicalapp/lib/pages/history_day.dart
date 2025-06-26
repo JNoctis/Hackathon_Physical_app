@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:intl/intl.dart'; // For date formatting
+import 'package:shared_preferences/shared_preferences.dart';
 
 // Assume a base URL for your backend API
 const String backendBaseUrl = 'http://127.0.0.1:5000'; // Please update with your actual backend address
@@ -101,12 +102,10 @@ String formatDuration(int totalSeconds) {
 
 class HistoryDayPage extends StatefulWidget {
   final DateTime selectedDate;
-  final int userId; // Add userId parameter for backend API calls
 
   const HistoryDayPage({
     super.key,
     required this.selectedDate,
-    required this.userId, // userId is now required
   });
 
   @override
@@ -119,12 +118,29 @@ class _HistoryDayPageState extends State<HistoryDayPage> {
   String? _errorMessage;
   int _currentIndex = 0; // Current activity index for pagination
   late PageController _pageController;
+  int? _userId;
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController();
-    _fetchActivities();
+    _loadUserId();
+  }
+
+  Future<void> _loadUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getInt('user_id');
+    if (userId != null) {
+      setState(() {
+        _userId = userId;
+      });
+      _fetchActivities();
+    } else {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'User ID not found in preferences';
+      });
+    }
   }
 
   @override
@@ -140,7 +156,7 @@ class _HistoryDayPageState extends State<HistoryDayPage> {
     });
 
     final formattedDate = DateFormat('yyyy-MM-dd').format(widget.selectedDate);
-    final url = Uri.parse('$backendBaseUrl/activities_by_date/${widget.userId}/$formattedDate');
+    final url = Uri.parse('$backendBaseUrl/activities_by_date/$_userId/$formattedDate');
 
     try {
       final response = await http.get(url);

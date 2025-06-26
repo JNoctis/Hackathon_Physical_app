@@ -34,16 +34,6 @@ class _HistoryPageState extends State<HistoryPage> {
     }
   }
 
-  Future<void> loadUsername() async {
-    final prefs = await SharedPreferences.getInstance();
-    final name = prefs.getString('username');
-    if (name != null) {
-      setState(() {
-        username = name;
-      });
-    }
-  }
-
   void _onItemTapped(int index) {
     if (index == _selectedIndex) return;
     setState(() => _selectedIndex = index);
@@ -181,7 +171,6 @@ class _HistoryPageState extends State<HistoryPage> {
                       MaterialPageRoute(
                         builder: (context) => HistoryDayPage(
                           selectedDate: day,
-                          userId: _currentUserId, // !!! 在這裡傳遞 userId !!!
                         ),
                       ),
                     );
