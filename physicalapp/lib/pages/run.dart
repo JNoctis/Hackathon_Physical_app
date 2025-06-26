@@ -71,7 +71,7 @@ class _RunPageState extends State<RunPage> {
     _positionStream = Geolocator.getPositionStream(
       locationSettings: const LocationSettings(
         accuracy: LocationAccuracy.best,
-        distanceFilter: 5,
+        distanceFilter: 0,
       ),
     ).listen((Position position) {
       if (!_isPaused) {
