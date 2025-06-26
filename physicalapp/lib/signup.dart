@@ -98,7 +98,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     ),
                     const SizedBox(height: 12),
                     TextButton(
-                      onPressed: () => Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false),
+                      onPressed: () => Navigator.pop(context),
                       child: const Text(
                         'Back to Login',
                         style: TextStyle(color: Colors.deepPurpleAccent),
