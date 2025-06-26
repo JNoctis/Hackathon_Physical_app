@@ -14,6 +14,7 @@ import 'package:flutter/services.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load();
+  await getAnalysis(101);
 
   runApp(const MyApp());
 }
