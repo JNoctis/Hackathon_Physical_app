@@ -19,7 +19,6 @@ class _ReportCardPageState extends State<ReportCardPage> {
   Map<String, dynamic>? doneWeek;
   int ? weight;
   bool? weightPraiseFlag;
-  bool? addDistFlag;
   double? exp_weight_loss;
   int? time;
   String? title_1;
@@ -45,21 +44,22 @@ Future<void> getAnalysis() async {
     setState(() {
       userType = data['user_type'];
       weight = data['weight'];
-      addDistFlag = (data == "health");
-      weightPraiseFlag = (data == "health");
+      weightPraiseFlag = data["user_type"] == "health";
       });
   } 
   final response_act = await http.get(
     Uri.parse('${dotenv.env['BASE_URL']}/activities/${userId}/past_week'),
   );
   if (response_act.statusCode == 200) {
-    final List<dynamic> activityList = jsonDecode(response.body);
+    final List<dynamic> activityList = jsonDecode(response_act.body);
     final Map<String, dynamic> states = summarizeActivities(activityList);
 
   setState(() {
       doneWeek = states;
       final avgPace = (states['avg_pace_week'] ?? 1).toDouble();
-      exp_weight_loss = 8.0 * 1.0 * 3600 / avgPace * 1.05 / 7700 * weight!; //weight
+      if (weight != null && avgPace > 0) {
+        exp_weight_loss = 8.0 * 1.0 * 3600 / avgPace * 1.05 / 7700 * weight!;
+      }
       time = states['last_run_time'];
       title_1 = getTimeTitleEnglish(time ?? 0);
       title_3 = getUserTitle(userType: userType ?? "Habit Builder", checkInDays: doneWeek?['round_week'] ?? 0,avgPace: doneWeek?['avg_pace_week'] ?? 0,avgDistance: doneWeek?['dist_week'] ?? 0);
@@ -146,7 +146,7 @@ Future<void> getAnalysis() async {
               ],
             ),
             const SizedBox(height: 20),
-            if (weightPraiseFlag == true && addDistFlag == true) 
+            if (weightPraiseFlag == true) 
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(

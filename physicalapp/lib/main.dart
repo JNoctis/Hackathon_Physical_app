@@ -102,11 +102,11 @@ class _MainPageState extends State<MainPage> {
   @override
   Widget build(BuildContext context) {
     // check questionare
-    // if (curr_goal_dist < 0) {
-    //   WidgetsBinding.instance.addPostFrameCallback((_) {
-    //     Navigator.pushReplacementNamed(context, '/instruction');
-    //   });
-    // }
+    if (curr_goal_dist < 0) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.pushReplacementNamed(context, '/instruction');
+      });
+    }
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
