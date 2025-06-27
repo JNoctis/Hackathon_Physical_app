@@ -87,6 +87,13 @@ class RunningResultPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.popUntil(context, (route) => route.isFirst);
+            Navigator.pushReplacementNamed(context, '/main');
+          },
+        ),
         // AppBar title now displays dynamic date
         title: const Text('Running Record'), // Changed to const
         backgroundColor: colorScheme.surface,
