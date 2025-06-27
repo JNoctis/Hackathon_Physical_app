@@ -209,22 +209,24 @@ class _HomePageState extends State<HomePage> {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               _EditableBox(
-                title: 'Distance',
+                title: 'Distance (km)',
                 controller: _distController,
-                unit: ' km',
+                // unit: ' km',
               ),
               _PaceInputBox(
-                title: 'Pace',
+                title: 'Pace (/km)',
                 minuteController: _minController,
                 secondController: _secController,
               ),
             ],
           ),
-          const SizedBox(height: 40),
+          const SizedBox(height: 20),
           const Text(
+            
             'This goal is recommended based on your previous pace and distance to improve endurance.',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 16, color: Colors.black87),
+
           ),
           const Spacer(),
           ElevatedButton(
@@ -272,19 +274,19 @@ class _HomePageState extends State<HomePage> {
 class _EditableBox extends StatelessWidget {
   final String title;
   final TextEditingController controller;
-  final String unit;
+  // final String unit;
 
   const _EditableBox({
     required this.title,
     required this.controller,
-    required this.unit,
+    // required this.unit,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 155,
-      height: 155,
+      width: 140,
+      height: 140,
       padding: const EdgeInsets.all(12),
       margin: const EdgeInsets.symmetric(vertical: 12),
       decoration: BoxDecoration(
@@ -305,7 +307,7 @@ class _EditableBox extends StatelessWidget {
           const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.end,
+            // crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               SizedBox(
                 width: 50,
@@ -315,7 +317,7 @@ class _EditableBox extends StatelessWidget {
                   inputFormatters: [
                     FilteringTextInputFormatter.allow(RegExp(r'^\d{0,2}(\.\d?)?'))
                   ],
-                  textAlign: TextAlign.right,
+                  // r
                   style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   decoration: const InputDecoration(
                     border: InputBorder.none,
@@ -324,10 +326,10 @@ class _EditableBox extends StatelessWidget {
                   ),
                 ),
               ),
-              Text(
-                unit,
-                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
+              // Text(
+                
+              //   style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)
+              // ),
             ],
           ),
         ],
@@ -350,10 +352,10 @@ class _PaceInputBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 155,
-      height: 155,
+      width: 140,
+      height: 140,
       padding: const EdgeInsets.all(12),
-      margin: const EdgeInsets.symmetric(vertical: 12),
+      // margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -370,14 +372,17 @@ class _PaceInputBox extends StatelessWidget {
         children: [
           Text(title, style: const TextStyle(fontSize: 16, color: Colors.black54)),
           const SizedBox(height: 10),
+          // const SizedBox(width: 40),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _TimeField(controller: minuteController, maxValue: 19),
+              
+              _TimeField1(controller: minuteController, maxValue: 9 ),
               const Text("'", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-              _TimeField(controller: secondController, maxValue: 59),
-              const Text('"/km', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+              _TimeField2(controller: secondController, maxValue: 59),
+              const Text('"', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
             ],
+            
           ),
         ],
       ),
@@ -385,11 +390,51 @@ class _PaceInputBox extends StatelessWidget {
   }
 }
 
-class _TimeField extends StatelessWidget {
+class _TimeField1 extends StatelessWidget {
   final TextEditingController controller;
   final int? maxValue;
 
-  const _TimeField({required this.controller, this.maxValue});
+  const _TimeField1({required this.controller, this.maxValue});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 16,
+      child: TextField(
+        controller: controller,
+        keyboardType: TextInputType.number,
+        inputFormatters: [
+          FilteringTextInputFormatter.digitsOnly,
+          LengthLimitingTextInputFormatter(2),
+        ],
+        onChanged: (value) {
+          if (maxValue != null) {
+            final parsed = int.tryParse(value);
+            if (parsed != null && parsed > maxValue!) {
+              controller.text = maxValue.toString();
+              controller.selection = TextSelection.fromPosition(
+                TextPosition(offset: controller.text.length),
+              );
+            }
+          }
+        },
+        textAlign: TextAlign.right,
+        style: const TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
+        decoration: const InputDecoration(
+          border: InputBorder.none,
+          isDense: true,
+          contentPadding: EdgeInsets.zero,
+        ),
+      ),
+    );
+  }
+}
+
+class _TimeField2 extends StatelessWidget {
+  final TextEditingController controller;
+  final int? maxValue;
+
+  const _TimeField2({required this.controller, this.maxValue});
 
   @override
   Widget build(BuildContext context) {
@@ -414,7 +459,7 @@ class _TimeField extends StatelessWidget {
           }
         },
         textAlign: TextAlign.right,
-        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        style: const TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
         decoration: const InputDecoration(
           border: InputBorder.none,
           isDense: true,
