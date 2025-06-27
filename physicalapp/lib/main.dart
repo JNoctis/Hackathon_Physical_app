@@ -21,7 +21,6 @@ import 'package:flutter/services.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load();
-  await getAnalysis(101);
 
   runApp(const MyApp());
 }
@@ -109,11 +108,12 @@ class _MainPageState extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (curr_goal_dist < 0) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        Navigator.pushReplacementNamed(context, '/instruction');
-      });
-    }
+    // check questionare
+    // if (curr_goal_dist < 0) {
+    //   WidgetsBinding.instance.addPostFrameCallback((_) {
+    //     Navigator.pushReplacementNamed(context, '/instruction');
+    //   });
+    // }
 
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 

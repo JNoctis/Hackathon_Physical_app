@@ -157,6 +157,21 @@ def get_user_activities(user_id):
         })
     return jsonify(output), 200
 
+@app.route('/activities/<int:user_id>/past_week', methods=['GET'])
+def get_past_week_activities(user_id):
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'message': 'User not found'}), 404
+
+    seven_days_ago = datetime.utcnow() - timedelta(days=7)
+
+    activities = Activity.query.filter_by(user_id=user_id)\
+        .filter(Activity.start_time >= seven_days_ago)\
+        .order_by(desc(Activity.start_time)).all()
+
+    output = [activity.to_dict() for activity in activities]
+    return jsonify(output), 200
+
 # NEW API: Get activities for a specific user and date
 @app.route('/activities_by_date/<int:user_id>/<string:date_str>', methods=['GET'])
 def get_activities_by_date(user_id, date_str):
@@ -491,6 +506,26 @@ def get_goal(user_id):
         'goal_dist': dist,
         'goal_pace': pace
     }), 200
+    
+@app.route('/user_type/<int:user_id>', methods=['GET'])
+def get_user_type(user_id):
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'message': 'User not found'}), 404
+
+    trait = Trait.query.filter_by(user_id=user_id).first()
+    if not trait:
+        return jsonify({'message': 'Trait not found'}), 404
+
+    weight = None
+    if trait.curr_goal and isinstance(trait.curr_goal, dict):
+        weight = trait.curr_goal.get('weight')
+
+    return jsonify({
+        'user_type': trait.user_type,
+        'weight': weight
+    }), 200
+    
 # analysis
 @app.route('/analysis/post', methods=['POST'])
 def analysis_post():

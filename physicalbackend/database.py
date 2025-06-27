@@ -57,6 +57,7 @@ def init_db_command():
 class Trait(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, unique=True)
+    user_type = db.Column(db.String, nullable=True)
     long_goal = db.Column(MutableDict.as_mutable(JSON), nullable=True)
     curr_goal = db.Column(MutableDict.as_mutable(JSON), nullable=True)
     # ex 

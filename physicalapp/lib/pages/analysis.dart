@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../utils/titles.dart';
 
 class ReportCardPage extends StatefulWidget {
 
@@ -11,55 +13,59 @@ class ReportCardPage extends StatefulWidget {
   State<ReportCardPage> createState() => _ReportCardPageState();
 }
 
-final baseUrl = dotenv.env['BASE_URL'] ?? '';
-
-Future<Map<String, dynamic>> getAnalysis(int userId) async {
-  final url = Uri.parse('$baseUrl/analysis/$userId');
-  try {
-    final response = await http.get(url);
-
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body) as Map<String, dynamic>;
-      print(const JsonEncoder.withIndent('  ').convert(data));
-      return data;
-    } else {
-      throw Exception('fetch error:${response.statusCode}');
-    }
-  } catch (e) {
-    print('parse error: $e');
-    rethrow; 
-  }
-}
-
-
 class _ReportCardPageState extends State<ReportCardPage> {
   late Future<Map<String, dynamic>> analysisFuture;
+  String? userType;
+  Map<String, dynamic>? doneWeek;
+  int ? weight;
+  bool? weightPraiseFlag;
+  bool? addDistFlag;
+  double? exp_weight_loss;
+  int? time;
+  String? title_1;
+  int? habitLevel;
+  String? title_3;
 
   @override
   void initState() {
     super.initState();
-    analysisFuture = getAnalysis(101); // 載入 user_id=101 的分析資料
+    getAnalysis();
   }
-      // 取值
-    final userId = analysisFuture['user_id'];
-    final userType = analysisFuture['user_type'];
-    final habitLevel = analysisFuture['habit_level'];
-    final time = analysisFuture['time'];
-    final addDistFlag = analysisFuture['add_dist_flag'];
-    final weightPraiseFlag = analysisFuture['weight_praise_flag'];
 
-    // 巢狀取值
-    final doneWeek = analysisFuture['done_week'] as Map<String, dynamic>;
-    final roundWeek = doneWeek['round_week'];
-    final distWeek = doneWeek['dist_week'];
-    final avgPaceWeek = doneWeek['avg_pace_week'];
-    final completeWeek = doneWeek['complete_week'];
+Future<void> getAnalysis() async {
+  final prefs = await SharedPreferences.getInstance();
+  final userId = prefs.getInt('user_id');
 
-    final weightPraise = analysisFuture['weight_praise'] as Map<String, dynamic>;
-    final addDist = weightPraise['add_dist'];
-    final expWeightDrop = weightPraise['exp_weight_drop'];
-  
-  
+  final response = await http.get(
+    Uri.parse('${dotenv.env['BASE_URL']}/user_type/${userId}'),
+  );
+  // 
+  if (response.statusCode == 200) {
+    final data = jsonDecode(response.body);
+    setState(() {
+      userType = data['user_type'];
+      weight = data['weight'];
+      addDistFlag = (data == "health");
+      weightPraiseFlag = (data == "health");
+      });
+  } 
+  final response_act = await http.get(
+    Uri.parse('${dotenv.env['BASE_URL']}/activities/${userId}/past_week'),
+  );
+  if (response_act.statusCode == 200) {
+    final List<dynamic> activityList = jsonDecode(response.body);
+    final Map<String, dynamic> states = summarizeActivities(activityList);
+
+  setState(() {
+      doneWeek = states;
+      final avgPace = (states['avg_pace_week'] ?? 1).toDouble();
+      exp_weight_loss = 8.0 * 1.0 * 3600 / avgPace * 1.05 / 7700 * weight!; //weight
+      time = states['last_run_time'];
+      title_1 = getTimeTitleEnglish(time ?? 0);
+      title_3 = getUserTitle(userType: userType ?? "Habit Builder", checkInDays: doneWeek?['round_week'] ?? 0,avgPace: doneWeek?['avg_pace_week'] ?? 0,avgDistance: doneWeek?['dist_week'] ?? 0);
+  });
+  } 
+}
   
   @override
   Widget build(BuildContext context) {
@@ -81,18 +87,18 @@ class _ReportCardPageState extends State<ReportCardPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const Text.rich(
+            Text.rich(
               TextSpan(
                 children: [
                   TextSpan(
-                    text: '你是\n',
+                    text: 'You are\n',
                     style: TextStyle(
                       fontSize: 20,
                       color: Colors.white,
                     ),
                   ),
                   TextSpan(
-                    text: '穩健型\n',
+                    text: '$userType\n',
                     style: TextStyle(
                       fontSize: 36, // 
                       fontWeight: FontWeight.bold,
@@ -100,7 +106,7 @@ class _ReportCardPageState extends State<ReportCardPage> {
                     ),
                   ),
                   // TextSpan(
-                  //   text: '養成者',
+                  //   text: 'Builder',
                   //   style: TextStyle(
                   //     fontSize: 20,
                   //     color: Colors.white,
@@ -110,61 +116,62 @@ class _ReportCardPageState extends State<ReportCardPage> {
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 8),
+            // const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                Expanded(child: _StatBox(title: '本週次數', value: '3')),
+                Expanded(child: _StatBox(title: 'Round', value: '${doneWeek?['round_week'] ?? 'N/A'}')),
                 const SizedBox(width: 10),
-                Expanded(child: _StatBox(title: '總距離', value: '9')),
+                Expanded(child: _StatBox(title: 'Dist', value: '${doneWeek?['dist_week'] ?? 'N/A'}')),
                 const SizedBox(width: 10),
-                Expanded(child: _StatBox(title: '配速提升', value: '15(S/km)')),
+                Expanded(child: _StatBox(title: 'Pace', value: '${doneWeek?['avg_pace_week'] ?? 'N/A'}')),
                 const SizedBox(width: 10),
               ],
             ),
             const SizedBox(height: 24),
             Row(
               children: [
-                const Text('習慣穩定度', style: TextStyle(color: Colors.white)),
-                const SizedBox(width: 12),
+                const Text('habit stability', style: TextStyle(color: Colors.white)),
+                SizedBox(width: 12),
                 Expanded(
                   child: LinearProgressIndicator(
-                    value: 0.82,
+                    value: doneWeek?['complete_week'] ?? 0,
                     color: Colors.deepPurpleAccent,
                     backgroundColor: Colors.white24,
                     minHeight: 15,
                   ),
                 ),
                 const SizedBox(width: 8),
-                const Text('82%', style: TextStyle(color: Colors.white)),
+                Text('${doneWeek?['complete_week'] ?? 0}', style: TextStyle(color: Colors.white)),
               ],
             ),
             const SizedBox(height: 20),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color.fromARGB(255, 240, 130, 4),
-                borderRadius: BorderRadius.circular(8),
+            if (weightPraiseFlag == true && addDistFlag == true) 
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color.fromARGB(255, 240, 130, 4),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  'If you add an extra 1 km to each trip, \n your weight is expected to decrease ${exp_weight_loss} kg. Keep it up!',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
               ),
-              child: const Text(
-                '未來每趟旅程若再追加多完成 500 公尺\n體重預計下降 0.6-1.2%，繼續保持！',
-                style: TextStyle(fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
-            ),
             const Spacer(),
             Wrap(
-              spacing: 12,
+              spacing: 15,
               alignment: WrapAlignment.center,
-              children: const [
-                ReportTag(label: '晨間勇者'),
-                ReportTag(label: '懶惰療癒系'),
-                ReportTag(label: '習慣養成 LV.2'),
+              children: [
+                ReportTag(label: title_1 ?? 'warrior'),
+                // ReportTag(label: userType?? 'normal builder'),
+                ReportTag(label: title_3 ?? ' '),
               ],
             ),
             const SizedBox(height: 20),
             const Text(
-              '運動不是對抗懶惰的你，你為了更健康的你',
+              'Exercise is not about fighting against your laziness; it\'s about finding your happiness.',
               style: TextStyle(color: Colors.white60),
               textAlign: TextAlign.center,
             ),
