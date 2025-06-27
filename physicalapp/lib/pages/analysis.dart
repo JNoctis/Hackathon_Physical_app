@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/titles.dart';
+import '../utils/time_format.dart';
 
 class ReportCardPage extends StatefulWidget {
 
@@ -70,12 +71,6 @@ Future<void> fetchActivityData() async {
     // default value when no activities in the past week
     if (activityList.isEmpty) {
       setState(() {
-        doneWeek = {
-          'round_week': '-',
-          'dist_week': '-',
-          'avg_pace_week': '-',
-          'last_run_time': '-',
-        };
         completeness = 0.0;
         exp_weight_loss = 8.0 * 1.0 * 3600 / 360 * 1.05 / 7700 * weight!;
         show_hashtags = false;
@@ -171,11 +166,11 @@ Future<void> initAnalysis() async {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                Expanded(child: _StatBox(title: 'Round', value: '${doneWeek?['round_week'] ?? 'N/A'}')),
+                Expanded(child: _StatBox(title: 'Round', value: '${doneWeek?['round_week'] ?? '-'}')),
                 const SizedBox(width: 10),
-                Expanded(child: _StatBox(title: 'Dist', value: '${doneWeek?['dist_week'] ?? 'N/A'}')),
+                Expanded(child: _StatBox(title: 'Dist', value: double.tryParse(doneWeek?['dist_week']?.toString() ?? '')?.toStringAsFixed(1) ?? '-')),
                 const SizedBox(width: 10),
-                Expanded(child: _StatBox(title: 'Pace', value: '${doneWeek?['avg_pace_week'] ?? 'N/A'}')),
+                Expanded(child: _StatBox(title: 'Pace', value: doneWeek?['avg_pace_week'] != null ? SecondsToSimplePace(doneWeek!['avg_pace_week']) : '-')),
                 const SizedBox(width: 10),
               ],
             ),
