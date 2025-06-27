@@ -102,6 +102,12 @@ Future<void> initAnalysis() async {
       backgroundColor: const Color(0xFF1C132B),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white), // ← 白色返回箭頭
+          onPressed: () {
+            Navigator.pop(context); // ← 返回上一頁
+          },
+        ),
         title: const Text('#RUN   #ENERGY   #FLOW'),
         titleTextStyle: const TextStyle(
           fontSize: 15,
@@ -205,14 +211,34 @@ Future<void> initAnalysis() async {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 12),
-            const Text(
-              '#MOVE YOUR LIFE',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
+            // const Text(
+            //   '#MOVE YOUR LIFE',
+            //   style: TextStyle(
+            //     color: Colors.white,
+            //     fontWeight: FontWeight.bold,
+            //     fontSize: 18,
+            //   ),
+            // ),
+             ElevatedButton.icon(
+                onPressed: () {
+                    Navigator.pushNamed(context, '/instruction');
+                },
+                  icon: const Icon(Icons.insert_comment, size: 18),
+                  label: const Text(
+                  'Change Your Mind',
+                  style: TextStyle(fontSize: 14),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color.fromARGB(255, 124, 77, 255),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  ),
+                  minimumSize: const Size(0, 36),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
               ),
-            ),
           ],
         ),
       ),

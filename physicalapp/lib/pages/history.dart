@@ -293,26 +293,26 @@ class _HistoryPageState extends State<HistoryPage> {
                                       fontWeight: FontWeight.bold,
                                     ),
                               ),
-                              ElevatedButton.icon(
-                                onPressed: () {
-                                  Navigator.pushNamed(context, '/instruction');
-                                },
-                                icon: const Icon(Icons.insert_comment, size: 18),
-                                label: const Text(
-                                  'Questionnaire',
-                                  style: TextStyle(fontSize: 14),
-                                ),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color.fromRGBO(124, 77, 255, 1),
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  minimumSize: const Size(0, 36),
-                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                ),
-                              ),
+                              // ElevatedButton.icon(
+                              //   onPressed: () {
+                              //     Navigator.pushNamed(context, '/instruction');
+                              //   },
+                              //   icon: const Icon(Icons.insert_comment, size: 18),
+                              //   label: const Text(
+                              //     'Questionnaire',
+                              //     style: TextStyle(fontSize: 14),
+                              //   ),
+                              //   style: ElevatedButton.styleFrom(
+                              //     backgroundColor: const Color.fromRGBO(124, 77, 255, 1),
+                              //     foregroundColor: Colors.white,
+                              //     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              //     shape: RoundedRectangleBorder(
+                              //       borderRadius: BorderRadius.circular(20),
+                              //     ),
+                              //     minimumSize: const Size(0, 36),
+                              //     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              //   ),
+                              // ),
                               ElevatedButton.icon(
                                 onPressed: () {
                                   // Navigate to login screen and remove all routes from stack

@@ -240,9 +240,13 @@ class _HomePageState extends State<HomePage> {
           const SizedBox(height: 40),
           const Text(
             
-            'This goal is recommended based on your previous pace and distance to improve endurance.',
+            'You can see your goal for today above.\n',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 16, color: Colors.black87),
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
+              decoration: TextDecoration.underline, // ← 加上這行
+            ),
 
           ),
           const SizedBox(height: 100),
