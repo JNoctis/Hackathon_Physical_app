@@ -17,6 +17,9 @@ PAST_ACCESS_ACT_NUM = 10
 RATIO_UPGRADE_SPEED = 0.5
 RATIO_UPGRADE_LENGTH = 0.7
 
+# Define maximum allowed pace in seconds/km (9 min 59 sec/km)
+MAX_PACE_SECONDS_PER_KM = 599
+
 # Initialize Flask app
 app = Flask(__name__)
 CORS(app) # Enable CORS for all routes
@@ -165,7 +168,7 @@ def get_activities_by_date(user_id, date_str):
         # Assuming date_str is in 'YYYY-MM-DD' format
         target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
     except ValueError:
-        return jsonify({'message': 'Invalid date format. Use YYYY-MM-DD'}), 400
+        return jsonify({'message': 'Invalid date format. Use ISO-MM-DD'}), 400
 
     # Query activities for the specific user and date
     activities = Activity.query.filter(
@@ -250,7 +253,9 @@ def finish_questionare():
 
     # g2: Do you have a long term goal?
     g2_answer = data.get('g2')
+    g2_has_specific_goal = False
     if g2_answer and g2_answer.startswith('Yes'):
+        g2_has_specific_goal = True
         # User has a specific long-term goal
         g2_additional_input = parse_additional_input(g2_answer)
         if g1_answer == 'Faster speed':
@@ -288,24 +293,36 @@ def finish_questionare():
             long_goal['pace'] = 450 # Moderate pace (7.5 min/km)
             long_goal['weight'] = 65.0 # A general healthy weight goal
 
+    # Determine a base current distance based on last run performance
+    base_curr_dist_from_h2 = curr_goal['dist'] # Default to initialized curr_goal['dist']
+    h2_answer = data.get('h2')
+    if h2_answer == 'Less than 3km':
+        base_curr_dist_from_h2 = 3.0
+    elif h2_answer == '3~10km':
+        base_curr_dist_from_h2 = 5.0
+    elif h2_answer == 'More than 10km':
+        base_curr_dist_from_h2 = 8.0
+
     # h1: How long has it been since you last ran? (Influences current goal's difficulty)
     h1_answer = data.get('h1')
     if h1_answer == 'More than a month':
-        curr_goal['dist'] = 2.0 # Start with a very short distance
-        curr_goal['pace'] = 600 # Very slow pace (10 min/km)
+        # If very long time, start with a truly short distance
+        curr_goal['dist'] = 2.0
+        curr_goal['pace'] = 599 # Very slow pace (9 min 59 sec/km)
     elif h1_answer == 'Within a month':
-        curr_goal['dist'] = max(curr_goal['dist'], 3.0) # Moderate starting distance
-        curr_goal['pace'] = max(curr_goal['pace'], 540) # Moderate pace (9 min/km)
-    # 'Within a week' implies active, keep current defaults for now, adjust more with h2/h3
+        # If some time, start with a slightly conservative distance
+        curr_goal['dist'] = max(3.0, base_curr_dist_from_h2 * 0.75) # At least 3km, or 75% of last run if long
+        curr_goal['pace'] = max(540, curr_goal['pace']) # Moderate pace (9 min/km)
+    else: # Within a week
+        curr_goal['dist'] = base_curr_dist_from_h2 # Use last run's distance as a strong indicator
+        # Pace will be refined by h3
 
-    # h2: How far did you run last time? (Adjusts current distance goal)
-    h2_answer = data.get('h2')
-    if h2_answer == 'Less than 3km':
-        curr_goal['dist'] = min(curr_goal['dist'], 3.0) # Ensure it's not too high
-    elif h2_answer == '3~10km':
-        curr_goal['dist'] = max(curr_goal['dist'], 5.0) # Raise to at least 5km
-    elif h2_answer == 'More than 10km':
-        curr_goal['dist'] = max(curr_goal['dist'], 8.0) # Raise to at least 8km
+    # Now refine curr_goal['dist'] based on relation to long_goal['dist']
+    # Ensure current distance is a reasonable fraction of long-term distance if long_goal is high
+    if long_goal['dist'] > 10.0 and curr_goal['dist'] < long_goal['dist'] * 0.2: # If long goal is high and current is too low
+        curr_goal['dist'] = max(curr_goal['dist'], long_goal['dist'] * 0.2) # Ensure at least 20% of long goal
+    if long_goal['dist'] > 5.0 and curr_goal['dist'] < long_goal['dist'] * 0.5 and h1_answer != 'More than a month':
+         curr_goal['dist'] = max(curr_goal['dist'], long_goal['dist'] * 0.3) # If active, aim for 30% of long goal
 
     # h3: How fast did you run last time? (min/km) (Adjusts current pace goal)
     h3_answer = data.get('h3')
@@ -318,6 +335,11 @@ def finish_questionare():
         curr_goal['pace'] = max(curr_goal['pace'], 480) # Aim for 8 min/km or slower
     # 'No idea' keeps the pace goal as is, influenced by h1/h2
 
+    # Ensure pace does not exceed MAX_PACE_SECONDS_PER_KM
+    long_goal['pace'] = min(long_goal['pace'], MAX_PACE_SECONDS_PER_KM)
+    curr_goal['pace'] = min(curr_goal['pace'], MAX_PACE_SECONDS_PER_KM)
+
+
     # h4: What is your current weight? (Adjusts current weight goal)
     h4_answer = data.get('h4')
     if h4_answer and h4_answer.startswith('kg'):
@@ -325,9 +347,11 @@ def finish_questionare():
         if 'weight' in h4_additional_input:
             curr_goal['weight'] = h4_additional_input['weight']
             # If current weight is high, make initial distance/pace goals a bit easier
-            if curr_goal['weight'] > 90: # Example threshold
+            if curr_goal['weight'] > 90: # Example threshold for higher weight
                 curr_goal['dist'] = min(curr_goal['dist'], 3.0)
-                curr_goal['pace'] = max(curr_goal['pace'], 540) # 9 min/km
+                curr_goal['pace'] = max(curr_goal['pace'], 540) # 9 min/km pace
+                curr_goal['pace'] = min(curr_goal['pace'], MAX_PACE_SECONDS_PER_KM)
+
 
     # m1: Have you started and quit running?
     m1_answer = data.get('m1')
@@ -343,13 +367,16 @@ def finish_questionare():
     elif m2_answer == 'No':
         believe_ai = False
 
-    # Ensure curr_goal does not set unrealistic targets compared to long_goal
+    # Final consistency checks to ensure curr_goal is not harder than long_goal
     # Current distance should be less than or equal to long-term distance
     curr_goal['dist'] = min(curr_goal['dist'], long_goal['dist'])
     # Current pace should be slower than or equal to long-term pace (higher seconds/km means slower)
     curr_goal['pace'] = max(curr_goal['pace'], long_goal['pace'])
     # Current weight should be higher than or equal to long-term target weight
     curr_goal['weight'] = max(curr_goal['weight'], long_goal['weight'])
+    
+    # Ensure current pace does not exceed the overall MAX_PACE_SECONDS_PER_KM
+    curr_goal['pace'] = min(curr_goal['pace'], MAX_PACE_SECONDS_PER_KM)
 
 
     # Create Trait instance
@@ -427,7 +454,7 @@ def update_trait_after_run(user_id):
         else: break
     if(consecutive_failures_pace > 1):
         # Increase pace (slower) by 10s for each consecutive failure after the first
-        new_goal['pace'] = min(curr_goal_pace + (consecutive_failures_pace - 1) * 10, 599) # Cap at 15 min/km
+        new_goal['pace'] = min(curr_goal_pace + (consecutive_failures_pace - 1) * 10, MAX_PACE_SECONDS_PER_KM) # Cap at 9 min 59 sec/km
 
     # Distance
     # If fail continuously, be downgraded gradually.

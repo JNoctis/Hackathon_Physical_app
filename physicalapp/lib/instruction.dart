@@ -247,8 +247,10 @@ class _ClassifyState extends State<ClassifyPage> {
                   if (response.statusCode == 201 || response.statusCode == 409) {
                     // success
                     if (context.mounted) {
-                      Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(builder: (context) => const MainPage()),
+                      Navigator.pushNamedAndRemoveUntil(
+                        context,
+                        '/main',
+                        (route) => false,
                       );
                     }
                   } else {

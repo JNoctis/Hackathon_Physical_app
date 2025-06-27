@@ -138,6 +138,7 @@ class _RunPageState extends State<RunPage> with SingleTickerProviderStateMixin {
           setState(() {});
         });
       }
+      _audioPlayer.play(AssetSource('audio/faster.mp3'));
       _isPaused = !_isPaused;
     });
   }
