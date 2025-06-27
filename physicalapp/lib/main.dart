@@ -74,15 +74,17 @@ class _MainPageState extends State<MainPage> {
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      setState(() {
-        curr_goal_dist = data['goal_dist'];
-        curr_goal_pace = data['goal_pace'];
-      });
-
+      
       // check questionare
-      if (curr_goal_dist < 0) {
+      if (data['goal_dist'] < 0) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           Navigator.pushReplacementNamed(context, '/instruction');
+        });
+      }
+      else{
+        setState(() {
+          curr_goal_dist = data['goal_dist'];
+          curr_goal_pace = data['goal_pace'];
         });
       }
     }
@@ -242,12 +244,12 @@ class _HomePageState extends State<HomePage> {
           const SizedBox(height: 40),
           const Text(
             
-            'You can see your goal for today above.\n',
+            "Ready for your run ? \n Here's your goal !",
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 16,
               color: Colors.black87,
-              decoration: TextDecoration.underline, // ← 加上這行
+
             ),
 
           ),
