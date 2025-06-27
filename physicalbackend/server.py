@@ -327,12 +327,15 @@ def finish_questionare():
         # If very long time, start with a truly short distance
         curr_goal['dist'] = 2.0
         curr_goal['pace'] = 599 # Very slow pace (9 min 59 sec/km)
+        curr_goal['freq'] = 1.0
     elif h1_answer == 'Within a month':
         # If some time, start with a slightly conservative distance
         curr_goal['dist'] = max(3.0, base_curr_dist_from_h2 * 0.75) # At least 3km, or 75% of last run if long
         curr_goal['pace'] = max(540, curr_goal['pace']) # Moderate pace (9 min/km)
+        curr_goal['freq'] = 2.0
     else: # Within a week
         curr_goal['dist'] = base_curr_dist_from_h2 # Use last run's distance as a strong indicator
+        curr_goal['freq'] = 3.0
         # Pace will be refined by h3
 
     # Now refine curr_goal['dist'] based on relation to long_goal['dist']
@@ -400,12 +403,11 @@ def finish_questionare():
     # Create Trait instance
     trait = Trait(
         user_id=user_id,
-        user_type = "healthy",
-        long_goal={"dist":10.0, "pace":450, "weight":60},
-        curr_goal={"dist":25.0, "pace":390, "weight":50, "freq": 3.0},
-        usually_quit=False,
-        now_quit=False,
-        believe_ai=False
+        long_goal=long_goal,
+        curr_goal=curr_goal,
+        usually_quit=usually_quit,
+        now_quit=now_quit,
+        believe_ai=believe_ai
     )
     # Save to database
     db.session.add(trait)
