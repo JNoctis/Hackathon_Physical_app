@@ -30,6 +30,7 @@ class _ReportCardPageState extends State<ReportCardPage> {
   String? title_3;
   double? completeness;
   double? freq;
+  String? errorMessage;
   
 
   @override
@@ -54,6 +55,13 @@ Future<void> fetchUserInfo() async {
       weightPraiseFlag = data['user_type'] == 'healthier';
       freq = (data['freq'] ?? 1.0).toDouble();
     });
+    //test iphone
+    if (response.statusCode != 200) {
+    print("user fetch error");
+    setState(() {
+      errorMessage = 'Failed to fetch data: user: (${response.statusCode})';
+    });
+}
 }
 }
 
@@ -101,6 +109,13 @@ Future<void> fetchActivityData() async {
       );
     });
    }
+   //test iphone
+   if (response.statusCode != 200) {
+    print("act fetch error");
+    setState(() {
+      errorMessage = 'Failed to fetch data: act: (${response.statusCode})';
+    });
+}
 }
 Future<void> initAnalysis() async {
   await fetchUserInfo();        // 先取得使用者資料
@@ -128,7 +143,18 @@ Future<void> initAnalysis() async {
         centerTitle: true,
         elevation: 0,
       ),
-      body: Padding(
+      body: errorMessage != null
+          ? _ErrorDisplay(
+              message: errorMessage!,
+              onRetry: () {
+                setState(() {
+                  errorMessage = null;
+                });
+                initAnalysis(); // 再次發送 API
+              },
+            )
+      
+      : Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -295,6 +321,45 @@ class _StatBox extends StatelessWidget {
           Text(title, style: const TextStyle(color: Colors.white, fontSize: 16)),
           const SizedBox(height: 8),
           Text(value, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+        ],
+      ),
+    );
+  }
+}
+
+
+// test iphone 
+
+class _ErrorDisplay extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+
+  const _ErrorDisplay({required this.message, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.error_outline, size: 64, color: Colors.redAccent),
+          const SizedBox(height: 16),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Colors.white, fontSize: 16),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: onRetry,
+            icon: const Icon(Icons.refresh),
+            label: const Text('Try Again'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.deepPurpleAccent,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
+          ),
         ],
       ),
     );
