@@ -229,11 +229,8 @@ def finish_questionare():
         db.session.delete(old_trait)
         db.session.commit()
 
-    # Initialize goals with sensible defaults
-    # These defaults are a starting point and will be adjusted based on answers.
-    # Long-term goal: Half-marathon distance (21.0 km), 5 min/km pace (300 seconds/km), ideal weight 60kg
     long_goal = {"dist": 21.0, "pace": 300, "weight": 60.0}
-    # Current goal: 5km distance, 7 min/km pace (420 seconds/km), current weight 70kg
+    
     curr_goal = {"dist": 5.0, "pace": 420, "weight": 70.0, "freq": 3.0} # Added 'freq' with a default
 
     usually_quit = False
@@ -268,12 +265,13 @@ def finish_questionare():
 
     # g1: Why do you run?
     g1_answer = data.get('g1')
+    
+    user_type = g1_answer.split()[0].lower()
+        
 
     # g2: Do you have a long term goal?
     g2_answer = data.get('g2')
-    g2_has_specific_goal = False
     if g2_answer and g2_answer.startswith('Yes'):
-        g2_has_specific_goal = True
         # User has a specific long-term goal
         g2_additional_input = parse_additional_input(g2_answer)
         if g1_answer == 'Faster speed':
@@ -303,7 +301,7 @@ def finish_questionare():
             long_goal['dist'] = 10.0 # A good distance to work on speed
             long_goal['weight'] = curr_goal['weight'] # Keep current weight for speed goal
         elif g1_answer == 'Longer distance':
-            long_goal['dist'] = max(25.0, long_goal['dist']) # Aim for longer than default (25 km)
+            long_goal['dist'] = max(10, long_goal['dist']) # Aim for longer than default (25 km)
             long_goal['pace'] = 390 # A bit slower pace for longer runs (6.5 min/km)
             long_goal['weight'] = curr_goal['weight'] # Keep current weight for distance goal
         elif g1_answer == 'Healthier shape':
@@ -324,60 +322,47 @@ def finish_questionare():
     # h1: How long has it been since you last ran? (Influences current goal's difficulty)
     h1_answer = data.get('h1')
     if h1_answer == 'More than a month':
-        # If very long time, start with a truly short distance and slower pace
         curr_goal['dist'] = 2.0
-        # Instead of always 599, use a range for "very slow" depending on other factors if any, or a more graduated step
-        # For a truly new/restarting runner, 9:00-9:59 is still appropriate. Let's aim for 9:30 as a default.
-        curr_goal['pace'] = 570 # 9 min 30 sec/km
-        curr_goal['freq'] = 1.0 # 1 run per week suggested
+        curr_goal['pace'] = 570 
+        curr_goal['freq'] = 1.0 
     elif h1_answer == 'Within a month':
-        # If some time, start with a slightly conservative distance, pace depends on h3 more
         curr_goal['dist'] = max(3.0, base_curr_dist_from_h2 * 0.75) # At least 3km, or 75% of last run if long
         curr_goal['pace'] = max(480, curr_goal['pace']) # At least 8 min/km, or existing pace
-        curr_goal['freq'] = 2.0 # 2 runs per week suggested
+        curr_goal['freq'] = 2.0
     else: # Within a week
         curr_goal['dist'] = base_curr_dist_from_h2 # Use last run's distance as a strong indicator
-        curr_goal['freq'] = 3.0 # 3 runs per week suggested
-        # Pace will be refined by h3
+        curr_goal['freq'] = 3.0 
 
-    # Now refine curr_goal['dist'] based on relation to long_goal['dist']
-    # Ensure current distance is a reasonable fraction of long-term distance if long_goal is high
     if long_goal['dist'] > 10.0 and curr_goal['dist'] < long_goal['dist'] * 0.2: # If long goal is high and current is too low
         curr_goal['dist'] = max(curr_goal['dist'], long_goal['dist'] * 0.2) # Ensure at least 20% of long goal
-    # For intermediate users, if curr_goal['dist'] is significantly lower than a reasonable fraction of long_goal['dist'], adjust it upwards
     if long_goal['dist'] > 5.0 and curr_goal['dist'] < long_goal['dist'] * 0.5 and h1_answer != 'More than a month':
          curr_goal['dist'] = max(curr_goal['dist'], long_goal['dist'] * 0.3) # If active, aim for at least 30% of long goal
 
-    # h3: How fast did you run last time? (min/km) (Adjusts current pace goal)
+    # h3: how fast
     h3_answer = data.get('h3')
     if h3_answer == 'Less than 5':
-        curr_goal['pace'] = min(curr_goal['pace'], 270) # Aim for 4.5 min/km or faster
+        curr_goal['pace'] = min(curr_goal['pace'], 300) 
     elif h3_answer == '5~7':
-        curr_goal['pace'] = max(curr_goal['pace'], 300) # At least 5 min/km
-        curr_goal['pace'] = min(curr_goal['pace'], 420) # At most 7 min/km
+        curr_goal['pace'] = max(curr_goal['pace'], 300) 
+        curr_goal['pace'] = min(curr_goal['pace'], 420) 
     elif h3_answer == 'More than 7':
-        curr_goal['pace'] = max(curr_goal['pace'], 480) # Aim for 8 min/km or slower
-    # 'No idea' keeps the pace goal as is, influenced by h1/h2 and weight
-
-    # Ensure pace does not exceed MAX_PACE_SECONDS_PER_KM and is not too slow
+        curr_goal['pace'] = max(curr_goal['pace'], 480) 
+    
     long_goal['pace'] = min(long_goal['pace'], MAX_PACE_SECONDS_PER_KM)
     curr_goal['pace'] = min(curr_goal['pace'], MAX_PACE_SECONDS_PER_KM)
 
 
-    # h4: What is your current weight? (Adjusts current weight goal and initial pace/distance if very heavy)
+    # h4: curr weight
     h4_answer = data.get('h4')
     if h4_answer and h4_answer.startswith('kg'):
         h4_additional_input = parse_additional_input(h4_answer)
         if 'weight' in h4_additional_input:
             curr_goal['weight'] = h4_additional_input['weight']
-            # If current weight is high, make initial distance/pace goals a bit easier, but not always 599
-            if curr_goal['weight'] > 90: # Example threshold for higher weight
-                curr_goal['dist'] = min(curr_goal['dist'], 3.0) # Cap initial distance
-                # For high weight, aim for a slower but not the absolute slowest pace
-                curr_goal['pace'] = max(curr_goal['pace'], 540) # 9 min/km pace
+            if curr_goal['weight'] > 90: # adjust for obese users
+                curr_goal['dist'] = min(curr_goal['dist'], 3.0) 
+                curr_goal['pace'] = max(curr_goal['pace'], 540) 
                 curr_goal['pace'] = min(curr_goal['pace'], MAX_PACE_SECONDS_PER_KM) # Ensure within max allowed
 
-    # m1: Have you started and quit running?
     m1_answer = data.get('m1')
     if m1_answer == 'Yes':
         usually_quit = True
@@ -401,18 +386,6 @@ def finish_questionare():
     
     # Ensure current pace does not exceed the overall MAX_PACE_SECONDS_PER_KM
     curr_goal['pace'] = min(curr_goal['pace'], MAX_PACE_SECONDS_PER_KM)
-
-    # Determine user_type based on initial questionnaire responses
-    user_type = "Beginner"
-    if h1_answer == 'Within a week' and h3_answer != 'No idea':
-        user_type = "Intermediate"
-        if h3_answer == 'Less than 5' or long_goal['pace'] < 300: # 5 min/km
-            user_type = "Advanced"
-    elif h1_answer == 'More than a month' and usually_quit:
-        user_type = "Returning"
-    elif g1_answer == 'Healthier shape' and curr_goal['weight'] > 80: # Example for weight-focused users
-        user_type = "WeightLossFocus"
-    # You can add more complex logic here to define user_type
 
     # Create Trait instance
     trait = Trait(

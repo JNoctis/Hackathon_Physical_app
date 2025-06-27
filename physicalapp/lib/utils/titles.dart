@@ -26,9 +26,9 @@ String getTimeTitleEnglish(DateTime time) {
 
 String getUserTitle_0(String userType) {
   switch (userType) {
-    case 'healthy': return "Habit Builder";
-    case 'fast': return "Intensity Challenger";
-    case 'long': return "Endurance Seeker";
+    case 'healthier': return "Habit Builder";
+    case 'faster': return "Intensity Challenger";
+    case 'longer': return "Endurance Seeker";
 
     default: 
       return 'Unknown';
@@ -42,21 +42,21 @@ String getUserTitle({
   double? avgDistance,    // for Endurance Seeker
 }) {
   switch (userType) {
-    case 'healthy':
+    case 'healthier':
       if (checkInDays == null) return 'Unknown';
       if (checkInDays >= 5) return 'Habit Pro';
       if (checkInDays >= 2) return 'Progress Maker';
       return 'Beginner on Track';
 
-    case 'fast':
+    case 'faster':
       if (avgPace == null) return 'Unknown';
       if (avgPace <= 5.0) return 'Speed Demon';
       if (avgPace < 7.0) return 'Speed Builder';
       return 'Easy Jogger';
 
-    case 'long':
+    case 'longer':
       if (avgDistance == null) return 'Unknown';
-      if (avgDistance >= 5.0) return 'Long Haul Strider';
+      if (avgDistance >= 5.0) return 'longer Haul Strider';
       return 'Short Distance Runner';
 
     default:

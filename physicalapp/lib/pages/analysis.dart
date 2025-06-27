@@ -19,10 +19,11 @@ class _ReportCardPageState extends State<ReportCardPage> {
   String? userType;
   Map<String, dynamic>? doneWeek;
   int ? weight;
-  bool? weightPraiseFlag;
+  bool weightPraiseFlag = false;
   double? exp_weight_loss;
   DateTime? time;
   String? title_0;
+  bool show_hashtags = true;
   String? title_1;
   int? habitLevel;
   String? title_3;
@@ -49,11 +50,9 @@ Future<void> fetchUserInfo() async {
     setState(() {
       userType = data['user_type'];
       weight = data['weight'];
-      weightPraiseFlag = data['user_type'] == 'healthy';
+      weightPraiseFlag = data['user_type'] == 'healthier';
       freq = (data['freq'] ?? 1.0).toDouble();
-      print("freq; $freq");
     });
-    // print('✅ UserType:'); print(userType);
 }
 }
 
@@ -67,6 +66,24 @@ Future<void> fetchActivityData() async {
 
   if (response.statusCode == 200) {
     final List<dynamic> activityList = jsonDecode(response.body);
+
+    // default value when no activities in the past week
+    if (activityList.isEmpty) {
+      setState(() {
+        doneWeek = {
+          'round_week': '-',
+          'dist_week': '-',
+          'avg_pace_week': '-',
+          'last_run_time': '-',
+        };
+        completeness = 0.0;
+        exp_weight_loss = 8.0 * 1.0 * 3600 / 360 * 1.05 / 7700 * weight!;
+        show_hashtags = false;
+        title_0 = "Ready to run!";
+      });
+      return;
+    }
+
     final states = summarizeActivities(activityList);
 
     final avgPace = (states['avg_pace_week'] ?? 1).toDouble();
@@ -74,7 +91,6 @@ Future<void> fetchActivityData() async {
     setState(() {
       doneWeek = states;
       completeness = min((states['round_week'] ?? 0.0) / freq, 1.0);
-      print('completeness, $completeness');
       if (weight != null && avgPace > 0) {
         exp_weight_loss = 8.0 * 1.0 * 3600 / avgPace * 1.05 / 7700 * weight!;
       }
@@ -195,15 +211,16 @@ Future<void> initAnalysis() async {
                 ),
               ),
             const Spacer(),
-            Wrap(
-              spacing: 15,
-              alignment: WrapAlignment.center,
-              children: [
-                ReportTag(label: title_1 ?? 'warrior'),
-                // ReportTag(label: userType?? 'normal builder'),
-                ReportTag(label: title_3 ?? ' '),
-              ],
-            ),
+            if (show_hashtags)
+              Wrap(
+                spacing: 15,
+                alignment: WrapAlignment.center,
+                children: [
+                  ReportTag(label: title_1 ?? 'warrior'),
+                  // ReportTag(label: userType?? 'normal builder'),
+                  ReportTag(label: title_3 ?? ' '),
+                ],
+              ),
             const SizedBox(height: 20),
             const Text(
               'Exercise is not about fighting against your laziness; it\'s about finding your happiness.',
