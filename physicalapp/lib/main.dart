@@ -18,9 +18,42 @@ import 'dart:convert';
 import '../utils/time_format.dart';
 import 'package:flutter/services.dart';
 
+
+// test fetchact
+import'../utils/titles.dart';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load();
+
+
+  // test fetchact
+      final testData = [
+      {
+        'start_time': '2025-06-23T09:20:00',
+        'distance_km': 5.0,
+        'duration_seconds': 1500,
+      },
+      {
+        'start_time': '2025-06-24T10:00:00',
+        'distance_km': 10.0,
+        'duration_seconds': 3000,
+      },
+      {
+        'start_time': '2025-06-20T12:00:00',  // 不是本週，應被排除
+        'distance_km': 7.0,
+        'duration_seconds': 2100,
+      }
+    ];
+
+    final result = summarizeActivities(testData);
+    print("XXXXXXXXXXXXXXXXXXXXXXXx");
+    print(result);
+
+    final time =  DateTime.parse(result['last_run_time']); 
+    final title = getTimeTitleEnglish(time);
+    print('title');
+    print(title);
 
   runApp(const MyApp());
 }

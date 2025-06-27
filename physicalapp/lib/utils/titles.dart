@@ -1,25 +1,37 @@
 
 
 
-String getTimeTitleEnglish(int time) {
-  if (time >= 4 && time < 6) {
+String getTimeTitleEnglish(DateTime time) {
+  final h = time.hour;
+  if (h >= 4 && h < 6) {
     return 'Dawn Warrior';
-  } else if (time >= 6 && time < 8) {
+  } else if (h >= 6 && h < 8) {
     return 'Morning Runner';
-  } else if (time >= 8 && time < 11) {
+  } else if (h >= 8 && h < 11) {
     return 'Daylight Pacer';
-  } else if (time >= 11 && time < 12) {
+  } else if (h >= 11 && h < 12) {
     return 'Daylight Pacer';
-  } else if (time >= 12 && time < 17) {
+  } else if (h >= 12 && h < 17) {
     return 'Solar Strider';
-  } else if (time >= 17 && time < 20) {
+  } else if (h >= 17 && h < 20) {
     return 'Twilight Chaser';
-  } else if (time >= 20 && time < 23) {
+  } else if (h >= 20 && h < 23) {
     return 'Night Run Fighter';
-  } else if (time >= 23 || time < 4) {
+  } else if (h >= 23 || h < 4) {
     return 'Moonlight Challenger';
   } else {
     return 'Unknown';
+  }
+}
+
+String getUserTitle_0(String userType) {
+  switch (userType) {
+    case 'healthy': return "Habit Builder";
+    case 'fast': return "Intensity Challenger";
+    case 'long': return "Endurance Seeker";
+
+    default: 
+      return 'Unknown';
   }
 }
 
@@ -30,19 +42,19 @@ String getUserTitle({
   double? avgDistance,    // for Endurance Seeker
 }) {
   switch (userType) {
-    case 'Habit Builder':
+    case 'healthy':
       if (checkInDays == null) return 'Unknown';
       if (checkInDays >= 5) return 'Habit Pro';
       if (checkInDays >= 2) return 'Progress Maker';
       return 'Beginner on Track';
 
-    case 'Intensity Challenger':
+    case 'fast':
       if (avgPace == null) return 'Unknown';
       if (avgPace <= 5.0) return 'Speed Demon';
       if (avgPace < 7.0) return 'Speed Builder';
       return 'Easy Jogger';
 
-    case 'Endurance Seeker':
+    case 'long':
       if (avgDistance == null) return 'Unknown';
       if (avgDistance >= 5.0) return 'Long Haul Strider';
       return 'Short Distance Runner';
@@ -54,11 +66,12 @@ String getUserTitle({
 
 Map<String, dynamic> summarizeActivities(List<dynamic> activityList) {
   final now = DateTime.now();
-  final beginningOfWeek = now.subtract(Duration(days: now.weekday - 1)); // 星期一
+  final sevendaysago = now.subtract(Duration(days: 7));
   int runCountThisWeek = 0;
   double totalDistance = 0.0;
   int totalDurationSeconds = 0;
   DateTime? lastRunTime;
+  print(sevendaysago);
 
   for (var activity in activityList) {
     final startTime = DateTime.parse(activity['start_time']);
@@ -66,7 +79,7 @@ Map<String, dynamic> summarizeActivities(List<dynamic> activityList) {
     final duration_seconds = (activity['duration_seconds'] ?? 0).toInt();
 
     // 本週活動
-    if (startTime.isAfter(beginningOfWeek)) {
+    if (startTime.isAfter(sevendaysago)) {
       runCountThisWeek++;
       totalDistance += distance;
       totalDurationSeconds = duration_seconds + totalDurationSeconds;
@@ -78,7 +91,10 @@ Map<String, dynamic> summarizeActivities(List<dynamic> activityList) {
     }
   }
 
-  final avgPace = (totalDurationSeconds / totalDistance).round();
+  int avgPace = 0;
+  if (totalDistance > 0) {
+    avgPace = (totalDurationSeconds / totalDistance).round();
+  }
 
   return {
     'round_week': runCountThisWeek,
