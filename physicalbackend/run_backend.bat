@@ -1,6 +1,4 @@
 @echo off
-REM 導航到後端目錄
-cd /d C:\Users\853uj\VSproject\Hackathon_Physical_app\physicalbackend
 
 echo Setting FLASK_APP environment variable...
 set FLASK_APP=server.py
