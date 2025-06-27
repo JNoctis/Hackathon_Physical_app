@@ -273,7 +273,7 @@ class _ClassifyState extends State<ClassifyPage> {
     final options = questionData['options'] as List<String>;
 
     return Scaffold(
-      appBar: AppBar(title: Text('Conditional Questionnaire')),
+      appBar: AppBar(title: Text('Questionnaire')),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
