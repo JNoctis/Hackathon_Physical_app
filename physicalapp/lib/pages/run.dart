@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:lottie/lottie.dart';
+import 'dart:math';
 
 class RunPage extends StatefulWidget {
   final double goalDistance;
@@ -33,9 +34,17 @@ class _RunPageState extends State<RunPage> with SingleTickerProviderStateMixin {
   final List<Duration> _splits = [];
   Duration _lastSplitElapsed = Duration.zero;
   final List<double> _recentPaces = [];
-  final int _paceCheckPeriod = 5;
+  final int _paceCheckPeriod = 10;
   final AudioPlayer _audioPlayer = AudioPlayer();
   double _progress = 0.0;
+  final random = Random(1);
+
+  double ACCELERATION_RATE = 50.0; // (5x)
+  double rate = 300; // 5'00"
+
+  bool already_slower = false;
+  bool already_faster = false;
+  bool first_demo = false;
 
   @override
   void initState() {
@@ -58,72 +67,63 @@ class _RunPageState extends State<RunPage> with SingleTickerProviderStateMixin {
       }
     }
 
+    // first demo or second demo
+    if(widget.goalDistance == 5){
+      first_demo = true;
+      print('First Demo');
+    }
+
     _activeStartTime = DateTime.now();
     _isPaused = false;
-
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+    
+    _timer = Timer.periodic(const Duration(milliseconds: 200), (_) {
       if (!_isPaused && _activeStartTime != null) {
-        setState(() {});
-      }
-    });
+        _pace = rate + random.nextDouble() * 60;
 
-    _positionStream = Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.best,
-        distanceFilter: 5,
-      ),
-    ).listen((Position position) {
-      if (!_isPaused) {
-        if (_lastPosition != null) {
-          final distance = Geolocator.distanceBetween(
-            _lastPosition!.latitude,
-            _lastPosition!.longitude,
-            position.latitude,
-            position.longitude,
-          );
+        final distance = (1000 / _pace) * ACCELERATION_RATE;
 
-          _totalDistance += distance;
-          _distanceSinceLastSplit += distance;
+        _totalDistance += distance;
+        _distanceSinceLastSplit += distance;
 
-          if (_distanceSinceLastSplit >= 1000.0) {
-            final currentElapsed = _activeDuration + 
-                (_activeStartTime == null ? Duration.zero : DateTime.now().difference(_activeStartTime!));
+        if (_distanceSinceLastSplit >= 1000.0) {
+          final currentElapsed = _activeDuration + 
+            (_activeStartTime == null ? Duration.zero : DateTime.now().difference(_activeStartTime!)) * 5 * ACCELERATION_RATE;
+          final splitDuration = currentElapsed - _lastSplitElapsed;
+          _splits.add(splitDuration);
 
-            final splitDuration = currentElapsed - _lastSplitElapsed;
-            _splits.add(splitDuration);
-
-            _lastSplitElapsed = currentElapsed;
-            _distanceSinceLastSplit = 0.0;
-          }
+          _lastSplitElapsed = currentElapsed;
+          _distanceSinceLastSplit = 0.0;
         }
-        _lastPosition = position;
-        _pace = position.speed == 0 ? -1 : (1000 / position.speed);
 
-        if(_pace > 0){
+        if(_pace > 0 && first_demo){
           _recentPaces.add(_pace);
 
           if (_recentPaces.length > _paceCheckPeriod) {
             _recentPaces.removeAt(0);
 
-            if(average(_recentPaces) > (widget.goalPace + 15)){
+            if(average(_recentPaces) > (widget.goalPace + 15) && !already_faster){
               print('Alert: Too slow!');
               _audioPlayer.play(AssetSource('audio/faster.mp3'));
               _recentPaces.clear();
+              already_faster = true;
+              rate = 360; // 6'00"
             }
-            else if(average(_recentPaces) < (widget.goalPace - 15)){
+            else if(average(_recentPaces) < (widget.goalPace - 15) && !already_slower){
               print('Alert: Too fast!');
               _audioPlayer.play(AssetSource('audio/slower.mp3'));
               _recentPaces.clear();
+              already_slower = true;
+              rate = 420; // 7'00"
             }
           }
         }
-
         setState(() {
           _progress = (_totalDistance / 1000 / widget.goalDistance).clamp(0.0, 1.0);
         });
       }
     });
   }
+
 
   void _pauseTracking() {
     setState(() {
@@ -134,7 +134,7 @@ class _RunPageState extends State<RunPage> with SingleTickerProviderStateMixin {
         _timer?.cancel();
       } else {
         _activeStartTime = DateTime.now();
-        _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+        _timer = Timer.periodic(const Duration(milliseconds: 100), (_) {
           setState(() {});
         });
       }
@@ -184,11 +184,11 @@ class _RunPageState extends State<RunPage> with SingleTickerProviderStateMixin {
     final runData = {
       'user_id': userId,
       'start_time': today.toIso8601String(),
-      'duration_seconds': _activeDuration.inSeconds,
+      'duration_seconds': totalRunTime.inSeconds,
       'distance_km': _totalDistance / 1000,
       'end_latitude': 0.0,
       'end_longitude': 0.0,
-      'average_pace_seconds_per_km': _totalDistance > 0 ? (_activeDuration.inSeconds / (_totalDistance / 1000)).round() : 0,
+      'average_pace_seconds_per_km': _totalDistance > 0 ? ((_activeDuration.inSeconds * 5 * ACCELERATION_RATE) / (_totalDistance / 1000) + 40).round() : 0,
       'split_paces': _splits.map((d) => d.inSeconds).toList(),
       'goal_state': check_goal(),
       'goal_dist': widget.goalDistance,
@@ -219,10 +219,13 @@ class _RunPageState extends State<RunPage> with SingleTickerProviderStateMixin {
     super.dispose();
   }
 
+  Duration get totalRunTime {
+    return (_activeDuration +
+        (_activeStartTime == null ? Duration.zero : DateTime.now().difference(_activeStartTime!))) * ACCELERATION_RATE * 5;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final totalRunTime = _activeDuration +
-        (_activeStartTime == null ? Duration.zero : DateTime.now().difference(_activeStartTime!));
 
     return Scaffold(
         appBar: AppBar(title: const Text('Running'),
@@ -336,9 +339,9 @@ class _RunPageState extends State<RunPage> with SingleTickerProviderStateMixin {
                     style: ElevatedButton.styleFrom(shape: const CircleBorder(), padding: const EdgeInsets.all(20)),
                     child: const Icon(Icons.pause, size: 32),
                   ),
-          ],
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    }
   }
-}
