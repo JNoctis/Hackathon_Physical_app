@@ -242,12 +242,12 @@ class _HomePageState extends State<HomePage> {
           const SizedBox(height: 40),
           const Text(
             
-            'You can see your goal for today above.\n',
+            "Ready for your run ? \n Here's your goal !",
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 16,
               color: Colors.black87,
-              decoration: TextDecoration.underline, // ← 加上這行
+
             ),
 
           ),
