@@ -237,7 +237,7 @@ class _HomePageState extends State<HomePage> {
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 40),
           const Text(
             
             'This goal is recommended based on your previous pace and distance to improve endurance.',
@@ -245,7 +245,7 @@ class _HomePageState extends State<HomePage> {
             style: TextStyle(fontSize: 16, color: Colors.black87),
 
           ),
-          const SizedBox(height: 40),
+          const SizedBox(height: 100),
           // const Spacer(),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
