@@ -78,6 +78,13 @@ class _MainPageState extends State<MainPage> {
         curr_goal_dist = data['goal_dist'];
         curr_goal_pace = data['goal_pace'];
       });
+
+      // check questionare
+      if (curr_goal_dist < 0) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          Navigator.pushReplacementNamed(context, '/instruction');
+        });
+      }
     }
   }
 
@@ -102,13 +109,6 @@ class _MainPageState extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
-    // check questionare
-    if (curr_goal_dist < 0) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        Navigator.pushReplacementNamed(context, '/instruction');
-      });
-    }
-
     return Scaffold(
       resizeToAvoidBottomInset: true,
       appBar: PreferredSize(
