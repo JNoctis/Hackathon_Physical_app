@@ -4,7 +4,7 @@ from flask_cors import CORS
 import json
 from datetime import datetime
 import click # Import click for custom commands
-from sqlalchemy import desc
+from sqlalchemy import desc, func
 from flask_sqlalchemy import SQLAlchemy
 import copy
 import re # Import re for regular expressions to parse questionnaire answers
@@ -155,7 +155,7 @@ def get_user_activities(user_id):
         })
     return jsonify(output), 200
 
-@app.route('/activities/<int:user_id>/past_week', methods=['GET'])
+@app.route('/activities/past_week/<int:user_id>', methods=['GET'])
 def get_past_week_activities(user_id):
     user = User.query.get(user_id)
     if not user:
@@ -168,6 +168,7 @@ def get_past_week_activities(user_id):
         .order_by(desc(Activity.start_time)).all()
 
     output = [activity.to_dict() for activity in activities]
+    print("📦 Returned Activities:", output)
     return jsonify(output), 200
 
 # NEW API: Get activities for a specific user and date
@@ -372,11 +373,12 @@ def finish_questionare():
     # Create Trait instance
     trait = Trait(
         user_id=user_id,
-        long_goal=long_goal,
-        curr_goal=curr_goal,
-        usually_quit=usually_quit,
-        now_quit=now_quit,
-        believe_ai=believe_ai
+        user_type = "healthy",
+        long_goal={"dist":10.0, "pace":450, "weight":60},
+        curr_goal={"dist":25.0, "pace":390, "weight":50, "freq": 3.0},
+        usually_quit=False,
+        now_quit=False,
+        believe_ai=False
     )
     # Save to database
     db.session.add(trait)
@@ -492,12 +494,15 @@ def get_user_type(user_id):
         return jsonify({'message': 'Trait not found'}), 404
 
     weight = None
+    freq = 7
     if trait.curr_goal and isinstance(trait.curr_goal, dict):
         weight = trait.curr_goal.get('weight')
+        freq = trait.curr_goal.get('freq')
 
     return jsonify({
         'user_type': trait.user_type,
-        'weight': weight
+        'weight': weight,
+        'freq': freq
     }), 200
     
 # analysis

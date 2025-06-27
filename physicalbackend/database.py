@@ -4,6 +4,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.ext.mutable import MutableDict
+import json
 
 # Initialize SQLAlchemy outside of app context for flexibility
 db = SQLAlchemy()
@@ -44,6 +45,22 @@ class Activity(db.Model):
     goal_state = db.Column(db.String, nullable=True)
     goal_dist = db.Column(db.Float, nullable=True)
     goal_pace = db.Column(db.Integer, nullable=True)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'start_time': self.start_time.isoformat(),  # datetime → string
+            'duration_seconds': self.duration_seconds,
+            'distance_km': self.distance_km,
+            'end_latitude': self.end_latitude,
+            'end_longitude': self.end_longitude,
+            'average_pace_seconds_per_km': self.average_pace_seconds_per_km,
+            'split_paces_json': json.loads(self.split_paces_json) if self.split_paces_json else None,
+            'goal_state': self.goal_state,
+            'goal_dist': self.goal_dist,
+            'goal_pace': self.goal_pace,
+        }
 
     def __repr__(self):
         return f'<Activity {self.id} for User {self.user_id}>'
@@ -68,9 +85,10 @@ class Trait(db.Model):
     # }
 
     # current = {
-    #   "dist": 5.0, 
-    #   "pace": 300,
-    #   "weight": 60
+    #   "dist": 5.0,  km
+    #   "pace": 300,  s/km
+    #   "weight": 60, kg
+    #   "freq": 3.0         days between run
     # }
     usually_quit = db.Column(db.Boolean, default=False)
     now_quit = db.Column(db.Boolean, default=False)

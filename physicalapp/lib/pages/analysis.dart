@@ -20,53 +20,81 @@ class _ReportCardPageState extends State<ReportCardPage> {
   int ? weight;
   bool? weightPraiseFlag;
   double? exp_weight_loss;
-  int? time;
+  DateTime? time;
+  String? title_0;
   String? title_1;
   int? habitLevel;
   String? title_3;
+  double? completeness;
+  double? freq;
+  
 
   @override
   void initState() {
     super.initState();
-    getAnalysis();
+    initAnalysis();
   }
 
-Future<void> getAnalysis() async {
+Future<void> fetchUserInfo() async {
   final prefs = await SharedPreferences.getInstance();
   final userId = prefs.getInt('user_id');
 
   final response = await http.get(
-    Uri.parse('${dotenv.env['BASE_URL']}/user_type/${userId}'),
+    Uri.parse('${dotenv.env['BASE_URL']}/user_type/$userId'),
   );
-  // 
+
   if (response.statusCode == 200) {
     final data = jsonDecode(response.body);
     setState(() {
       userType = data['user_type'];
       weight = data['weight'];
-      weightPraiseFlag = data["user_type"] == "health";
-      });
-  } 
-  final response_act = await http.get(
-    Uri.parse('${dotenv.env['BASE_URL']}/activities/${userId}/past_week'),
-  );
-  if (response_act.statusCode == 200) {
-    final List<dynamic> activityList = jsonDecode(response_act.body);
-    final Map<String, dynamic> states = summarizeActivities(activityList);
+      weightPraiseFlag = data['user_type'] == 'healthy';
+      freq = (data['freq'] ?? 0.0).toDouble();
+      print("freq; $freq");
+    });
+    // print('✅ UserType:'); print(userType);
+}
+}
 
-  setState(() {
+Future<void> fetchActivityData() async {
+  final prefs = await SharedPreferences.getInstance();
+  final userId = prefs.getInt('user_id');
+
+  final response = await http.get(
+    Uri.parse('${dotenv.env['BASE_URL']}/activities/past_week/$userId'),
+  );
+
+  if (response.statusCode == 200) {
+    final List<dynamic> activityList = jsonDecode(response.body);
+    final states = summarizeActivities(activityList);
+
+    final avgPace = (states['avg_pace_week'] ?? 1).toDouble();
+
+    setState(() {
       doneWeek = states;
-      final avgPace = (states['avg_pace_week'] ?? 1).toDouble();
+      completeness = ((states['round_week'] ?? 0.0) / 7.0);
+      print('completeness, $completeness');
       if (weight != null && avgPace > 0) {
         exp_weight_loss = 8.0 * 1.0 * 3600 / avgPace * 1.05 / 7700 * weight!;
       }
-      time = states['last_run_time'];
-      title_1 = getTimeTitleEnglish(time ?? 0);
-      title_3 = getUserTitle(userType: userType ?? "Habit Builder", checkInDays: doneWeek?['round_week'] ?? 0,avgPace: doneWeek?['avg_pace_week'] ?? 0,avgDistance: doneWeek?['dist_week'] ?? 0);
-  });
-  } 
+      title_0 = getUserTitle_0(userType??"healthy");
+      time = DateTime.parse(states['last_run_time']); 
+      title_1 = getTimeTitleEnglish(time ?? DateTime.now());
+
+      title_3 = getUserTitle(
+        userType: userType ?? "Habit Builder",
+        checkInDays: doneWeek?['round_week'] ?? 0,
+        avgPace: doneWeek?['avg_pace_week'] ?? 0,
+        avgDistance: doneWeek?['dist_week'] ?? 0,
+      );
+    });
+   }
 }
-  
+Future<void> initAnalysis() async {
+  await fetchUserInfo();        // 先取得使用者資料
+  await fetchActivityData();    // 再進行活動分析
+}
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -98,7 +126,7 @@ Future<void> getAnalysis() async {
                     ),
                   ),
                   TextSpan(
-                    text: '$userType\n',
+                    text: '$title_0\n',
                     style: TextStyle(
                       fontSize: 36, // 
                       fontWeight: FontWeight.bold,
@@ -135,14 +163,14 @@ Future<void> getAnalysis() async {
                 SizedBox(width: 12),
                 Expanded(
                   child: LinearProgressIndicator(
-                    value: doneWeek?['complete_week'] ?? 0,
+                    value: completeness,
                     color: Colors.deepPurpleAccent,
                     backgroundColor: Colors.white24,
                     minHeight: 15,
                   ),
                 ),
                 const SizedBox(width: 8),
-                Text('${doneWeek?['complete_week'] ?? 0}', style: TextStyle(color: Colors.white)),
+                Text((completeness ?? 0.0).toStringAsFixed(2), style: TextStyle(color: Colors.white)),
               ],
             ),
             const SizedBox(height: 20),
@@ -154,7 +182,7 @@ Future<void> getAnalysis() async {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  'If you add an extra 1 km to each trip, \n your weight is expected to decrease ${exp_weight_loss} kg. Keep it up!',
+                  'If you add an extra 1 km to each trip, \n your weight is expected to decrease ${(exp_weight_loss ?? 0).toStringAsFixed(2)} kg. Keep it up!',
                   style: TextStyle(fontWeight: FontWeight.bold),
                   textAlign: TextAlign.center,
                 ),
