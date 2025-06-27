@@ -88,7 +88,7 @@ class Trait(db.Model):
     #   "dist": 5.0,  km
     #   "pace": 300,  s/km
     #   "weight": 60, kg
-    #   "freq": 3.0         days between run
+    #   "freq": 3.0         ruonds per week
     # }
     usually_quit = db.Column(db.Boolean, default=False)
     now_quit = db.Column(db.Boolean, default=False)

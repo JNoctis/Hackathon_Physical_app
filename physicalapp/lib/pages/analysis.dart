@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
@@ -49,7 +50,7 @@ Future<void> fetchUserInfo() async {
       userType = data['user_type'];
       weight = data['weight'];
       weightPraiseFlag = data['user_type'] == 'healthy';
-      freq = (data['freq'] ?? 0.0).toDouble();
+      freq = (data['freq'] ?? 1.0).toDouble();
       print("freq; $freq");
     });
     // print('✅ UserType:'); print(userType);
@@ -72,7 +73,7 @@ Future<void> fetchActivityData() async {
 
     setState(() {
       doneWeek = states;
-      completeness = ((states['round_week'] ?? 0.0) / 7.0);
+      completeness = min((states['round_week'] ?? 0.0) / freq, 1.0);
       print('completeness, $completeness');
       if (weight != null && avgPace > 0) {
         exp_weight_loss = 8.0 * 1.0 * 3600 / avgPace * 1.05 / 7700 * weight!;

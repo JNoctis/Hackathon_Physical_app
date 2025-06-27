@@ -311,9 +311,13 @@ def finish_questionare():
     if h1_answer == 'More than a month':
         curr_goal['dist'] = 2.0 # Start with a very short distance
         curr_goal['pace'] = 600 # Very slow pace (10 min/km)
+        curr_goal['freq'] = 1.0
     elif h1_answer == 'Within a month':
         curr_goal['dist'] = max(curr_goal['dist'], 3.0) # Moderate starting distance
         curr_goal['pace'] = max(curr_goal['pace'], 540) # Moderate pace (9 min/km)
+        curr_goal['freq'] = 2.0
+    else:
+        curr_goal['freq'] = 3.0
     # 'Within a week' implies active, keep current defaults for now, adjust more with h2/h3
 
     # h2: How far did you run last time? (Adjusts current distance goal)
@@ -360,6 +364,8 @@ def finish_questionare():
         believe_ai = True
     elif m2_answer == 'No':
         believe_ai = False
+        
+    
 
     # Ensure curr_goal does not set unrealistic targets compared to long_goal
     # Current distance should be less than or equal to long-term distance
@@ -368,17 +374,17 @@ def finish_questionare():
     curr_goal['pace'] = max(curr_goal['pace'], long_goal['pace'])
     # Current weight should be higher than or equal to long-term target weight
     curr_goal['weight'] = max(curr_goal['weight'], long_goal['weight'])
+    curr_goal['freq'] = min(7.0, curr_goal['freq'])
 
 
     # Create Trait instance
     trait = Trait(
         user_id=user_id,
-        user_type = "healthy",
-        long_goal={"dist":10.0, "pace":450, "weight":60},
-        curr_goal={"dist":25.0, "pace":390, "weight":50, "freq": 3.0},
-        usually_quit=False,
-        now_quit=False,
-        believe_ai=False
+        long_goal=long_goal,
+        curr_goal=curr_goal,
+        usually_quit=usually_quit,
+        now_quit=now_quit,
+        believe_ai=believe_ai
     )
     # Save to database
     db.session.add(trait)
