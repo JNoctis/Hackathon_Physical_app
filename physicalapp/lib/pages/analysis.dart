@@ -19,17 +19,17 @@ class _ReportCardPageState extends State<ReportCardPage> {
   late Future<Map<String, dynamic>> analysisFuture;
   String? userType;
   Map<String, dynamic>? doneWeek;
-  int ? weight;
+  double ? weight;
   bool weightPraiseFlag = false;
   double? exp_weight_loss;
   DateTime? time;
   String? title_0;
-  bool show_hashtags = true;
+  bool show_hashtags = false;
   String? title_1;
   int? habitLevel;
   String? title_3;
   double? completeness;
-  double? freq;
+  double freq = 1.0;
   String? errorMessage;
   
 
@@ -51,7 +51,7 @@ Future<void> fetchUserInfo() async {
     final data = jsonDecode(response.body);
     setState(() {
       userType = data['user_type'];
-      weight = data['weight'];
+      weight = (data['weight'] as num?)?.toDouble();
       weightPraiseFlag = data['user_type'] == 'healthier';
       freq = (data['freq'] ?? 1.0).toDouble();
     });
@@ -81,31 +81,38 @@ Future<void> fetchActivityData() async {
       setState(() {
         completeness = 0.0;
         exp_weight_loss = 8.0 * 1.0 * 3600 / 360 * 1.05 / 7700 * weight!;
-        show_hashtags = false;
         title_0 = "Ready to run!";
       });
       return;
     }
 
+    // do have act
+    show_hashtags = true;
     final states = summarizeActivities(activityList);
-
-    final avgPace = (states['avg_pace_week'] ?? 1).toDouble();
 
     setState(() {
       doneWeek = states;
-      completeness = min((states['round_week'] ?? 0.0) / freq, 1.0);
+
+      // 安全轉換為 double
+      final roundWeek = (states['round_week'] as num?)?.toDouble() ?? 0.0;
+      final avgPace = (states['avg_pace_week'] as num?)?.toDouble() ?? 1.0;
+      final dist = (states['dist_week'] as num?)?.toDouble() ?? 0.0;
+
+      completeness = min<double>(roundWeek / freq, 1.0);
+
       if (weight != null && avgPace > 0) {
         exp_weight_loss = 8.0 * 1.0 * 3600 / avgPace * 1.05 / 7700 * weight!;
       }
-      title_0 = getUserTitle_0(userType??"healthy");
-      time = DateTime.parse(states['last_run_time']); 
+
+      title_0 = getUserTitle_0(userType ?? "healthy");
+      time = DateTime.parse(states['last_run_time']);
       title_1 = getTimeTitleEnglish(time ?? DateTime.now());
 
       title_3 = getUserTitle(
         userType: userType ?? "Habit Builder",
-        checkInDays: doneWeek?['round_week'] ?? 0,
-        avgPace: doneWeek?['avg_pace_week'] ?? 0,
-        avgDistance: doneWeek?['dist_week'] ?? 0,
+        checkInDays: roundWeek.toInt(),
+        avgPace: avgPace,
+        avgDistance: dist,
       );
     });
    }
@@ -196,7 +203,14 @@ Future<void> initAnalysis() async {
                 const SizedBox(width: 10),
                 Expanded(child: _StatBox(title: 'Dist', value: double.tryParse(doneWeek?['dist_week']?.toString() ?? '')?.toStringAsFixed(1) ?? '-')),
                 const SizedBox(width: 10),
-                Expanded(child: _StatBox(title: 'Pace', value: doneWeek?['avg_pace_week'] != null ? SecondsToSimplePace(doneWeek!['avg_pace_week']) : '-')),
+                Expanded(
+                  child: _StatBox(
+                    title: 'Pace',
+                    value: (doneWeek?['avg_pace_week'] as num?) != null
+                        ? SecondsToSimplePace((doneWeek?['avg_pace_week'] as num).toDouble())
+                        : '-',
+                  ),
+                ),
                 const SizedBox(width: 10),
               ],
             ),

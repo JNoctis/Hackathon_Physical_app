@@ -18,7 +18,7 @@ String SecondsToPace(double seconds) {
 }
 
 // seconds to pace (X'XX" or XX")
-String SecondsToSimplePace(double seconds) {
+String SecondsToSimplePace(num seconds) {
   if (seconds <= 0 || seconds > 1200) return "--'--\"";
   final int totalSeconds = seconds.round();
   final int minute = totalSeconds ~/ 60;
