@@ -2,10 +2,6 @@
 
 This project is a running performance tracking application, consisting of a Flutter-based mobile frontend and a Flask-based Python backend. It allows users to record their running activities, view historical data, and track progress towards their fitness goals.
 
-# Running Performance Tracker App
-
-This project is a running performance tracking application, consisting of a Flutter-based mobile frontend and a Flask-based Python backend. It allows users to record their running activities, view historical data, and track progress towards their fitness goals.
-
 ## Table of Contents
 
 - [Features](https://www.notion.so/21f2ac42b1da80fa81e3cace044a23aa?pvs=21)
@@ -132,85 +128,310 @@ Stores user-specific traits and personalized goal information.
 
 The Flask backend provides the following RESTful API endpoints:
 
-### User Management
+### 1. User Registration
 
-- **`POST /register`**
-    - **Description:** Registers a new user.
-    - **Request Body:** `application/json`
-        
-        ```
-        {
-            "username": "newuser",
-            "password": "securepassword",
-            "third_party_id": "optional_id_from_oauth"
-        }
-        
-        ```
-        
-    - **Responses:** `201 Created` (success) or `400 Bad Request` / `409 Conflict` (failure).
-- **`POST /login`**
-    - **Description:** Authenticates a user.
-    - **Request Body:** `application/json`
-        
-        ```
-        {
-            "username": "existinguser",
-            "password": "correctpassword"
-        }
-        
-        ```
-        
-    - **Responses:** `200 OK` (success with `user_id`) or `401 Unauthorized` (failure).
+- **Endpoint:** `/register`
+- **Method:** `POST`
+- **Description:** Registers a new user.
+- **Request Example:**
+    
+    ```
+    {
+        "username": "newuser",
+        "password": "securepassword123",
+        "third_party_id": "optional_third_party_id"
+    }
+    
+    ```
+    
+- **Response Example (Success):**
+    
+    ```
+    {
+        "message": "User registered successfully"
+    }
+    
+    ```
+    
+- **Error Responses:**
+    - `400 Bad Request`: `{"message": "Username and password are required"}`
+    - `409 Conflict`: `{"message": "Username already exists"}`
+    - `409 Conflict`: `{"message": "Third-party ID already linked to an account"}`
 
-### Activity Management
+### 2. User Login
 
-- **`POST /activities`**
-    - **Description:** Adds a new running activity record.
-    - **Request Body:** `application/json`
-        
-        ```
+- **Endpoint:** `/login`
+- **Method:** `POST`
+- **Description:** Authenticates user credentials and logs in.
+- **Request Example:**
+    
+    ```
+    {
+        "username": "testuser",
+        "password": "testpassword"
+    }
+    
+    ```
+    
+- **Response Example (Success):**
+    
+    ```
+    {
+        "message": "Login successful",
+        "user_id": 1
+    }
+    
+    ```
+    
+- **Error Responses:**
+    - `401 Unauthorized`: `{"message": "Invalid credentials"}`
+
+### 3. Add Activity Record
+
+- **Endpoint:** `/activities`
+- **Method:** `POST`
+- **Description:** Records a single running activity.
+- **Request Example:**
+    
+    ```
+    {
+        "user_id": 1,
+        "start_time": "2025-06-27T10:00:00",
+        "duration_seconds": 1800,
+        "distance_km": 5.0,
+        "end_latitude": 25.0330,
+        "end_longitude": 121.5645,
+        "average_pace_seconds_per_km": 360.0,
+        "split_paces": [350, 365, 355, 360, 370],
+        "goal_state": true,
+        "goal_dist": 5.0,
+        "goal_pace": 370
+    }
+    
+    ```
+    
+- **Response Example (Success):**
+    
+    ```
+    {
+        "message": "Activity added successfully",
+        "activity_id": 101
+    }
+    
+    ```
+    
+- **Error Responses:**
+    - `400 Bad Request`: `{"message": "Missing field: [field_name]"}`
+    - `400 Bad Request`: `{"message": "Invalid date format for start_time. Use ISO format (YYYY-MM-DDTHH:MM:SS)"}`
+    - `404 Not Found`: `{"message": "User not found or not authenticated"}`
+    - `500 Internal Server Error`: `{"message": "Error adding activity: [error_details]"}`
+
+### 4. Get All User Activity Records
+
+- **Endpoint:** `/activities/<int:user_id>`
+- **Method:** `GET`
+- **Description:** Retrieves all running activity records for a specified user, ordered by time in descending order.
+- **URL Parameters:**
+    - `user_id` (Integer): Unique identifier for the user.
+- **Response Example (Success):**
+    
+    ```
+    [
         {
+            "id": 101,
             "user_id": 1,
             "start_time": "2025-06-27T10:00:00",
             "duration_seconds": 1800,
-            "distance_km": 5.2,
-            "average_pace_seconds_per_km": 346,
-            "split_paces": [{"km": 1, "pace_seconds": 340}, ...],
-            "goal_state": "completed",
+            "distance_km": 5.0,
+            "end_latitude": 25.0330,
+            "end_longitude": 121.5645,
+            "average_pace_seconds_per_km": 360.0,
+            "split_paces": [350, 365, 355, 360, 370],
+            "goal_state": true,
             "goal_dist": 5.0,
-            "goal_pace": 360
+            "goal_pace": 370
+        },
+        {
+            "id": 100,
+            "user_id": 1,
+            "start_time": "2025-06-26T09:30:00",
+            "duration_seconds": 1200,
+            "distance_km": 3.0,
+            "end_latitude": 25.0300,
+            "end_longitude": 121.5600,
+            "average_pace_seconds_per_km": 400.0,
+            "split_paces": [390, 410, 400],
+            "goal_state": false,
+            "goal_dist": 4.0,
+            "goal_pace": 390
         }
-        
-        ```
-        
-    - **Responses:** `201 Created` (success with `activity_id`) or `400 Bad Request` / `404 Not Found` / `500 Internal Server Error` (failure).
-- **`GET /activities/<int:user_id>`**
-    - **Description:** Retrieves all running activities for a specific user, ordered by `start_time` descending.
-    - **Parameters:** `user_id` (Path)
-    - **Responses:** `200 OK` (array of activity objects) or `404 Not Found` (user not found).
-- **`GET /activities/past_week/<int:user_id>`**
-    - **Description:** Retrieves running activities for a specific user from the past 7 days.
-    - **Parameters:** `user_id` (Path)
-    - **Responses:** `200 OK` (array of activity objects) or `404 Not Found` (user not found).
-- **`GET /activities_by_date/<int:user_id>/<string:date_str>`**
-    - **Description:** Retrieves running activities for a specific user on a given date.
-    - **Parameters:** `user_id` (Path), `date_str` (Path, format `YYYY-MM-DD`)
-    - **Responses:** `200 OK` (array of activity objects) or `400 Bad Request` / `404 Not Found` (failure).
+    ]
+    
+    ```
+    
+- **Error Responses:**
+    - `404 Not Found`: `{"message": "User not found"}`
 
-### Trait and Goal Management
+### 5. Get User Activity Records from Past Week
 
-- **`POST /finish_questionare`**
-    - **Description:** Processes a user's questionnaire answers to initialize or update their `Trait` record and set initial goals.
-    - **Request Body:** `application/json`, containing `user_id` and questionnaire answers.
-    - **Responses:** `201 Created` (success) or `400 Bad Request` / `409 Conflict` (failure).
-- **`GET /goal/<int:user_id>`**
-    - **Description:** Retrieves the current recommended running goal (distance and pace) for a specific user.
-    - **Parameters:** `user_id` (Path)
-    - **Responses:** `200 OK` (JSON with `goal_dist` and `goal_pace`) or `404 Not Found` (user not found).
-- **`GET /user_type/<int:user_id>`**
-    - **Description:** Retrieves the user's type, current weight, and running frequency.
-    - **Parameters:** `user_id` (Path)
-    - **Responses:** `200 OK` (JSON with `user_type`, `weight`, `freq`) or `404 Not Found` (user or trait not found).
+- **Endpoint:** `/activities/past_week/<int:user_id>`
+- **Method:** `GET`
+- **Description:** Retrieves running activity records for the past seven days for a specified user, ordered by time in descending order.
+- **URL Parameters:**
+    - `user_id` (Integer): Unique identifier for the user.
+- **Response Example (Success):** (Similar to `get_user_activities`, but only includes data from the past seven days)
+    
+    ```
+    [
+        {
+            "id": 101,
+            "user_id": 1,
+            "start_time": "2025-06-27T10:00:00",
+            "duration_seconds": 1800,
+            "distance_km": 5.0,
+            "end_latitude": 25.0330,
+            "end_longitude": 121.5645,
+            "average_pace_seconds_per_km": 360.0,
+            "split_paces": [350, 365, 355, 360, 370],
+            "goal_state": true,
+            "goal_dist": 5.0,
+            "goal_pace": 370
+        }
+    ]
+    
+    ```
+    
+- **Error Responses:**
+    - `404 Not Found`: `{"message": "User not found"}`
+
+### 6. Get User Activity Records for a Specific Date
+
+- **Endpoint:** `/activities_by_date/<int:user_id>/<string:date_str>`
+- **Method:** `GET`
+- **Description:** Retrieves all running activity records for a specified user on a specific date, ordered by time in descending order.
+- **URL Parameters:**
+    - `user_id` (Integer): Unique identifier for the user.
+    - `date_str` (String): Date string in `YYYY-MM-DD` format.
+- **Request Example:** `/activities_by_date/1/2025-06-27`
+- **Response Example (Success):** (Similar to `get_user_activities`, but only includes data for the specified date)
+    
+    ```
+    [
+        {
+            "id": 101,
+            "user_id": 1,
+            "start_time": "2025-06-27T10:00:00",
+            "duration_seconds": 1800,
+            "distance_km": 5.0,
+            "end_latitude": 25.0330,
+            "end_longitude": 121.5645,
+            "average_pace_seconds_per_km": 360.0,
+            "split_paces": [350, 365, 355, 360, 370],
+            "goal_state": true,
+            "goal_dist": 5.0,
+            "goal_pace": 370
+        }
+    ]
+    
+    ```
+    
+- **Error Responses:**
+    - `400 Bad Request`: `{"message": "Invalid date format. Use ISO-MM-DD"}`
+    - `404 Not Found`: `{"message": "User not found"}`
+
+### 7. Complete Questionnaire and Set User Traits/Goals
+
+- **Endpoint:** `/finish_questionare`
+- **Method:** `POST`
+- **Description:** After a user completes the questionnaire, their long-term and current running goals and other traits are set based on their answers.
+- **Request Example:**
+    
+    ```
+    {
+        "user_id": 1,
+        "g1": "Faster speed (Additional: distance=10, speed=4.5)",
+        "g2": "Yes (Additional: distance=21, speed=4)",
+        "h1": "Within a week",
+        "h2": "3~10km",
+        "h3": "5~7",
+        "h4": "kg (Additional: weight=75)",
+        "m1": "No",
+        "m2": "Yes"
+    }
+    
+    ```
+    
+    - **g1:** Running motivation ('Faster speed', 'Longer distance', 'Healthier shape'). Can include additional parameters in `(Additional: ...)` format.
+    - **g2:** Whether there is a long-term goal ('Yes', 'No'). If 'Yes', can include additional parameters in `(Additional: ...)` format, such as `distance` (target distance), `speed` (target pace in min/km), `goal` (target distance, used for 'Longer distance' type), `weight` (target weight).
+    - **h1:** Time since last run ('More than a month', 'Within a month', 'Within a week').
+    - **h2:** Usual running distance ('Less than 3km', '3~10km', 'More than 10km').
+    - **h3:** Usual running pace ('Less than 5', '5~7', 'More than 7'), in min/km.
+    - **h4:** Current weight. Can include additional parameters in `(Additional: weight=...)` format.
+    - **m1:** Whether habitually gives up ('Yes', 'No').
+    - **m2:** Whether believes in AI recommendations ('Yes', 'No').
+- **Response Example (Success):**
+    
+    ```
+    {
+        "message": "Trait created successfully"
+    }
+    
+    ```
+    
+- **Error Responses:**
+    - `400 Bad Request`: `{"error": "Missing user_id"}`
+
+### 8. Get Today's Running Goal
+
+- **Endpoint:** `/goal/<int:user_id>`
+- **Method:** `GET`
+- **Description:** Retrieves the current running goal (distance and pace) for a specified user.
+- **URL Parameters:**
+    - `user_id` (Integer): Unique identifier for the user.
+- **Response Example (Success):**
+    
+    ```
+    {
+        "goal_dist": 5.0,
+        "goal_pace": 360.0
+    }
+    
+    ```
+    
+- **Response Example (Questionnaire not completed):**
+    
+    ```
+    {
+        "goal_dist": -1,
+        "goal_pace": -1
+    }
+    
+    ```
+    
+- **Error Responses:**
+    - `404 Not Found`: `{"message": "User not found"}`
+
+### 9. Get User Type and Current Weight/Frequency
+
+- **Endpoint:** `/user_type/<int:user_id>`
+- **Method:** `GET`
+- **Description:** Retrieves the user's type, their current weight, and their running frequency goal.
+- **URL Parameters:**
+    - `user_id` (Integer): Unique identifier for the user.
+- **Response Example (Success):**
+    
+    ```
+    {
+        "user_type": "faster",
+        "weight": 70.0,
+        "freq": 3.0
+    }
+    
+    ```
+    
+- **Error Responses:**
+    - `404 Not Found`: `{"message": "User not found"}`
+    - `404 Not Found`: `{"message": "Trait not found"}`
 
 ## Setup Instructions
 
