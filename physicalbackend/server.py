@@ -1,4 +1,3 @@
-# server.py
 import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -7,6 +6,7 @@ from datetime import datetime
 import click # Import click for custom commands
 from sqlalchemy import desc, func # Import func for date filtering
 import copy
+import re # Import re for regular expressions to parse questionnaire answers
 
 # Import db and models from database.py
 from database import db, User, Activity, init_db_command, Trait
@@ -202,27 +202,166 @@ def finish_questionare():
     if not user_id:
         return jsonify({'error': 'Missing user_id'}), 400
 
-    # if trait exist, delete old.
+    # If trait exists, delete old.
     old_trait = Trait.query.filter_by(user_id=user_id).first()
     if old_trait:
         db.session.delete(old_trait)
         db.session.commit()
 
-    # ========== IMPLEMENT TRANSFER ANSWERS TO GOAL ==========
-    print(data)
+    # Initialize goals with sensible defaults
+    # These defaults are a starting point and will be adjusted based on answers.
+    # Long-term goal: Half-marathon distance (21.0 km), 5 min/km pace (300 seconds/km), ideal weight 60kg
+    long_goal = {"dist": 21.0, "pace": 300, "weight": 60.0}
+    # Current goal: 5km distance, 7 min/km pace (420 seconds/km), current weight 70kg
+    curr_goal = {"dist": 5.0, "pace": 420, "weight": 70.0}
 
-    # 建立 Trait 實例
+    usually_quit = False
+    now_quit = False # This field is typically updated by the performance logic in update_trait_after_run, not directly from questionnaire
+    believe_ai = False
+
+    # Helper function to parse additional input from answers string
+    def parse_additional_input(answer_string):
+        """Parses additional key=value pairs from an answer string like '(Additional: key1=val1, key2=val2)'."""
+        match = re.search(r'\(Additional: (.*)\)', answer_string)
+        if match:
+            params_str = match.group(1)
+            params = {}
+            for pair in params_str.split(', '):
+                key_val = pair.split('=')
+                if len(key_val) == 2:
+                    key, val = key_val[0], key_val[1]
+                    try:
+                        # Attempt to convert to float or int for numeric values
+                        if key in ['distance', 'goal', 'weight']:
+                            params[key] = float(val)
+                        elif key == 'speed':
+                            params[key] = int(val) # Speed is min/km, will be converted to seconds later
+                        else:
+                            params[key] = val # Keep as string if not numeric
+                    except ValueError:
+                        params[key] = val # Fallback to string if conversion fails
+            return params
+        return {}
+
+    # --- Process answers from the questionnaire ---
+
+    # g1: Why do you run?
+    g1_answer = data.get('g1')
+
+    # g2: Do you have a long term goal?
+    g2_answer = data.get('g2')
+    if g2_answer and g2_answer.startswith('Yes'):
+        # User has a specific long-term goal
+        g2_additional_input = parse_additional_input(g2_answer)
+        if g1_answer == 'Faster speed':
+            if 'distance' in g2_additional_input:
+                long_goal['dist'] = g2_additional_input['distance']
+            if 'speed' in g2_additional_input:
+                # Convert min/km to seconds/km (e.g., 5 min/km -> 300 sec/km)
+                long_goal['pace'] = int(g2_additional_input['speed'] * 60)
+            long_goal['weight'] = curr_goal['weight'] # Keep current weight for speed goal unless specified
+        elif g1_answer == 'Longer distance':
+            if 'goal' in g2_additional_input:
+                long_goal['dist'] = g2_additional_input['goal']
+            # Set a reasonable default pace for longer distance goals if not explicitly given
+            long_goal['pace'] = 360 # 6 min/km pace
+            long_goal['weight'] = curr_goal['weight'] # Keep current weight for distance goal unless specified
+        elif g1_answer == 'Healthier shape':
+            if 'weight' in g2_additional_input:
+                long_goal['weight'] = g2_additional_input['weight']
+            # Set generic distance/pace goals for healthier shape if not specified
+            long_goal['dist'] = 10.0 # A common distance for general health
+            long_goal['pace'] = 420 # 7 min/km pace
+
+    elif g2_answer == 'No':
+        # User does not have a specific long-term goal, infer from g1
+        if g1_answer == 'Faster speed':
+            long_goal['pace'] = min(270, long_goal['pace']) # Aim for slightly faster than default (4.5 min/km)
+            long_goal['dist'] = 10.0 # A good distance to work on speed
+            long_goal['weight'] = curr_goal['weight'] # Keep current weight for speed goal
+        elif g1_answer == 'Longer distance':
+            long_goal['dist'] = max(25.0, long_goal['dist']) # Aim for longer than default (25 km)
+            long_goal['pace'] = 390 # A bit slower pace for longer runs (6.5 min/km)
+            long_goal['weight'] = curr_goal['weight'] # Keep current weight for distance goal
+        elif g1_answer == 'Healthier shape':
+            long_goal['dist'] = 10.0 # Keep general 10km goal
+            long_goal['pace'] = 450 # Moderate pace (7.5 min/km)
+            long_goal['weight'] = 65.0 # A general healthy weight goal
+
+    # h1: How long has it been since you last ran? (Influences current goal's difficulty)
+    h1_answer = data.get('h1')
+    if h1_answer == 'More than a month':
+        curr_goal['dist'] = 2.0 # Start with a very short distance
+        curr_goal['pace'] = 600 # Very slow pace (10 min/km)
+    elif h1_answer == 'Within a month':
+        curr_goal['dist'] = max(curr_goal['dist'], 3.0) # Moderate starting distance
+        curr_goal['pace'] = max(curr_goal['pace'], 540) # Moderate pace (9 min/km)
+    # 'Within a week' implies active, keep current defaults for now, adjust more with h2/h3
+
+    # h2: How far did you run last time? (Adjusts current distance goal)
+    h2_answer = data.get('h2')
+    if h2_answer == 'Less than 3km':
+        curr_goal['dist'] = min(curr_goal['dist'], 3.0) # Ensure it's not too high
+    elif h2_answer == '3~10km':
+        curr_goal['dist'] = max(curr_goal['dist'], 5.0) # Raise to at least 5km
+    elif h2_answer == 'More than 10km':
+        curr_goal['dist'] = max(curr_goal['dist'], 8.0) # Raise to at least 8km
+
+    # h3: How fast did you run last time? (min/km) (Adjusts current pace goal)
+    h3_answer = data.get('h3')
+    if h3_answer == 'Less than 5':
+        curr_goal['pace'] = min(curr_goal['pace'], 270) # Aim for 4.5 min/km or faster
+    elif h3_answer == '5~7':
+        curr_goal['pace'] = max(curr_goal['pace'], 300) # At least 5 min/km
+        curr_goal['pace'] = min(curr_goal['pace'], 420) # At most 7 min/km
+    elif h3_answer == 'More than 7':
+        curr_goal['pace'] = max(curr_goal['pace'], 480) # Aim for 8 min/km or slower
+    # 'No idea' keeps the pace goal as is, influenced by h1/h2
+
+    # h4: What is your current weight? (Adjusts current weight goal)
+    h4_answer = data.get('h4')
+    if h4_answer and h4_answer.startswith('kg'):
+        h4_additional_input = parse_additional_input(h4_answer)
+        if 'weight' in h4_additional_input:
+            curr_goal['weight'] = h4_additional_input['weight']
+            # If current weight is high, make initial distance/pace goals a bit easier
+            if curr_goal['weight'] > 90: # Example threshold
+                curr_goal['dist'] = min(curr_goal['dist'], 3.0)
+                curr_goal['pace'] = max(curr_goal['pace'], 540) # 9 min/km
+
+    # m1: Have you started and quit running?
+    m1_answer = data.get('m1')
+    if m1_answer == 'Yes':
+        usually_quit = True
+    elif m1_answer == 'No':
+        usually_quit = False
+
+    # m2: Do you believe in the idea: "Don't think. Just run as AI tells you"?
+    m2_answer = data.get('m2')
+    if m2_answer == 'Yes':
+        believe_ai = True
+    elif m2_answer == 'No':
+        believe_ai = False
+
+    # Ensure curr_goal does not set unrealistic targets compared to long_goal
+    # Current distance should be less than or equal to long-term distance
+    curr_goal['dist'] = min(curr_goal['dist'], long_goal['dist'])
+    # Current pace should be slower than or equal to long-term pace (higher seconds/km means slower)
+    curr_goal['pace'] = max(curr_goal['pace'], long_goal['pace'])
+    # Current weight should be higher than or equal to long-term target weight
+    curr_goal['weight'] = max(curr_goal['weight'], long_goal['weight'])
+
+
+    # Create Trait instance
     trait = Trait(
         user_id=user_id,
-        long_goal={"dist":25.0, "pace":350, "weight":60},
-        curr_goal={"dist":20.0, "pace":450, "weight":70},
-        usually_quit=False,
-        now_quit=False,
-        believe_ai=False
+        long_goal=long_goal,
+        curr_goal=curr_goal,
+        usually_quit=usually_quit,
+        now_quit=now_quit,
+        believe_ai=believe_ai
     )
-    # ========== IMPLEMENT TRANSFER ANSWERS TO GOAL ==========
-
-    # 儲存到資料庫
+    # Save to database
     db.session.add(trait)
     db.session.commit()
 
@@ -234,7 +373,7 @@ def update_trait_after_run(user_id):
     if not trait or not trait.curr_goal:
         return
 
-    original_goal = trait.curr_goal.copy()
+    original_goal = copy.deepcopy(trait.curr_goal) # Use deepcopy to keep original for comparison
     new_goal = trait.curr_goal
     curr_goal_pace = new_goal['pace']
     curr_goal_dist = new_goal['dist']
@@ -245,7 +384,7 @@ def update_trait_after_run(user_id):
     if curr_goal_pace is None or curr_goal_dist is None:
         return
 
-    # 抓最近 n 次活動
+    # Fetch recent activities
     activities = Activity.query.filter_by(user_id=user_id)\
         .order_by(desc(Activity.start_time)).limit(PAST_ACCESS_ACT_NUM).all()
 
@@ -257,11 +396,11 @@ def update_trait_after_run(user_id):
 
     for act in activities:
         if act.average_pace_seconds_per_km and act.distance_km:
-            if act.average_pace_seconds_per_km < curr_goal_pace:
+            if act.average_pace_seconds_per_km < curr_goal_pace: # Faster means lower pace value
                 faster_count.append(1)
             else:
                 faster_count.append(0)
-            if act.distance_km >= curr_goal_dist:
+            if act.distance_km >= curr_goal_dist: # Longer means greater or equal distance
                 longer_count.append(1)
             else:
                 longer_count.append(0)
@@ -282,22 +421,25 @@ def update_trait_after_run(user_id):
     # Downgrade conditions
     # Pace
     # If fail continuously, be downgraded gradually.
-    consecutive_failures = 0
+    consecutive_failures_pace = 0
     for i in faster_count:
-        if(i == 0): consecutive_failures += 1
+        if(i == 0): consecutive_failures_pace += 1
         else: break
-    if(consecutive_failures > 1):
-        new_goal['pace'] = min(curr_goal_pace + (consecutive_failures - 1) * 10, 900)
+    if(consecutive_failures_pace > 1):
+        # Increase pace (slower) by 10s for each consecutive failure after the first
+        new_goal['pace'] = min(curr_goal_pace + (consecutive_failures_pace - 1) * 10, 599) # Cap at 15 min/km
+
     # Distance
     # If fail continuously, be downgraded gradually.
-    consecutive_failures = 0
+    consecutive_failures_dist = 0
     for i in longer_count:
-        if(i == 0): consecutive_failures += 1
+        if(i == 0): consecutive_failures_dist += 1
         else: break
-    if(consecutive_failures > 1):
-        new_goal['dist'] = max(curr_goal_dist - (consecutive_failures - 1) * 0.5, 1)
+    if(consecutive_failures_dist > 1):
+        # Decrease distance by 0.5km for each consecutive failure after the first
+        new_goal['dist'] = max(curr_goal_dist - (consecutive_failures_dist - 1) * 0.5, 1.0) # Minimum 1km
 
-    print(original_goal, new_goal)
+    print(f"Original Goal: {original_goal}, New Goal: {new_goal}")
     db.session.commit()
 
 # get today goal
