@@ -11,7 +11,7 @@ import re # Import re for regular expressions to parse questionnaire answers
 from datetime import datetime, timedelta
 
 # Import db and models from database.py
-from database import db, User, Activity, init_db_command, Trait, Analysis
+from database import db, User, Activity, init_db_command, Trait
 from flask_cors import CORS
 
 # Constants for updating performance
@@ -234,7 +234,7 @@ def finish_questionare():
     # Long-term goal: Half-marathon distance (21.0 km), 5 min/km pace (300 seconds/km), ideal weight 60kg
     long_goal = {"dist": 21.0, "pace": 300, "weight": 60.0}
     # Current goal: 5km distance, 7 min/km pace (420 seconds/km), current weight 70kg
-    curr_goal = {"dist": 5.0, "pace": 420, "weight": 70.0}
+    curr_goal = {"dist": 5.0, "pace": 420, "weight": 70.0, "freq": 3.0} # Added 'freq' with a default
 
     usually_quit = False
     now_quit = False # This field is typically updated by the performance logic in update_trait_after_run, not directly from questionnaire
@@ -324,26 +324,29 @@ def finish_questionare():
     # h1: How long has it been since you last ran? (Influences current goal's difficulty)
     h1_answer = data.get('h1')
     if h1_answer == 'More than a month':
-        # If very long time, start with a truly short distance
+        # If very long time, start with a truly short distance and slower pace
         curr_goal['dist'] = 2.0
-        curr_goal['pace'] = 599 # Very slow pace (9 min 59 sec/km)
-        curr_goal['freq'] = 1.0
+        # Instead of always 599, use a range for "very slow" depending on other factors if any, or a more graduated step
+        # For a truly new/restarting runner, 9:00-9:59 is still appropriate. Let's aim for 9:30 as a default.
+        curr_goal['pace'] = 570 # 9 min 30 sec/km
+        curr_goal['freq'] = 1.0 # 1 run per week suggested
     elif h1_answer == 'Within a month':
-        # If some time, start with a slightly conservative distance
+        # If some time, start with a slightly conservative distance, pace depends on h3 more
         curr_goal['dist'] = max(3.0, base_curr_dist_from_h2 * 0.75) # At least 3km, or 75% of last run if long
-        curr_goal['pace'] = max(540, curr_goal['pace']) # Moderate pace (9 min/km)
-        curr_goal['freq'] = 2.0
+        curr_goal['pace'] = max(480, curr_goal['pace']) # At least 8 min/km, or existing pace
+        curr_goal['freq'] = 2.0 # 2 runs per week suggested
     else: # Within a week
         curr_goal['dist'] = base_curr_dist_from_h2 # Use last run's distance as a strong indicator
-        curr_goal['freq'] = 3.0
+        curr_goal['freq'] = 3.0 # 3 runs per week suggested
         # Pace will be refined by h3
 
     # Now refine curr_goal['dist'] based on relation to long_goal['dist']
     # Ensure current distance is a reasonable fraction of long-term distance if long_goal is high
     if long_goal['dist'] > 10.0 and curr_goal['dist'] < long_goal['dist'] * 0.2: # If long goal is high and current is too low
         curr_goal['dist'] = max(curr_goal['dist'], long_goal['dist'] * 0.2) # Ensure at least 20% of long goal
+    # For intermediate users, if curr_goal['dist'] is significantly lower than a reasonable fraction of long_goal['dist'], adjust it upwards
     if long_goal['dist'] > 5.0 and curr_goal['dist'] < long_goal['dist'] * 0.5 and h1_answer != 'More than a month':
-         curr_goal['dist'] = max(curr_goal['dist'], long_goal['dist'] * 0.3) # If active, aim for 30% of long goal
+         curr_goal['dist'] = max(curr_goal['dist'], long_goal['dist'] * 0.3) # If active, aim for at least 30% of long goal
 
     # h3: How fast did you run last time? (min/km) (Adjusts current pace goal)
     h3_answer = data.get('h3')
@@ -354,25 +357,25 @@ def finish_questionare():
         curr_goal['pace'] = min(curr_goal['pace'], 420) # At most 7 min/km
     elif h3_answer == 'More than 7':
         curr_goal['pace'] = max(curr_goal['pace'], 480) # Aim for 8 min/km or slower
-    # 'No idea' keeps the pace goal as is, influenced by h1/h2
+    # 'No idea' keeps the pace goal as is, influenced by h1/h2 and weight
 
-    # Ensure pace does not exceed MAX_PACE_SECONDS_PER_KM
+    # Ensure pace does not exceed MAX_PACE_SECONDS_PER_KM and is not too slow
     long_goal['pace'] = min(long_goal['pace'], MAX_PACE_SECONDS_PER_KM)
     curr_goal['pace'] = min(curr_goal['pace'], MAX_PACE_SECONDS_PER_KM)
 
 
-    # h4: What is your current weight? (Adjusts current weight goal)
+    # h4: What is your current weight? (Adjusts current weight goal and initial pace/distance if very heavy)
     h4_answer = data.get('h4')
     if h4_answer and h4_answer.startswith('kg'):
         h4_additional_input = parse_additional_input(h4_answer)
         if 'weight' in h4_additional_input:
             curr_goal['weight'] = h4_additional_input['weight']
-            # If current weight is high, make initial distance/pace goals a bit easier
+            # If current weight is high, make initial distance/pace goals a bit easier, but not always 599
             if curr_goal['weight'] > 90: # Example threshold for higher weight
-                curr_goal['dist'] = min(curr_goal['dist'], 3.0)
+                curr_goal['dist'] = min(curr_goal['dist'], 3.0) # Cap initial distance
+                # For high weight, aim for a slower but not the absolute slowest pace
                 curr_goal['pace'] = max(curr_goal['pace'], 540) # 9 min/km pace
-                curr_goal['pace'] = min(curr_goal['pace'], MAX_PACE_SECONDS_PER_KM)
-
+                curr_goal['pace'] = min(curr_goal['pace'], MAX_PACE_SECONDS_PER_KM) # Ensure within max allowed
 
     # m1: Have you started and quit running?
     m1_answer = data.get('m1')
@@ -399,6 +402,17 @@ def finish_questionare():
     # Ensure current pace does not exceed the overall MAX_PACE_SECONDS_PER_KM
     curr_goal['pace'] = min(curr_goal['pace'], MAX_PACE_SECONDS_PER_KM)
 
+    # Determine user_type based on initial questionnaire responses
+    user_type = "Beginner"
+    if h1_answer == 'Within a week' and h3_answer != 'No idea':
+        user_type = "Intermediate"
+        if h3_answer == 'Less than 5' or long_goal['pace'] < 300: # 5 min/km
+            user_type = "Advanced"
+    elif h1_answer == 'More than a month' and usually_quit:
+        user_type = "Returning"
+    elif g1_answer == 'Healthier shape' and curr_goal['weight'] > 80: # Example for weight-focused users
+        user_type = "WeightLossFocus"
+    # You can add more complex logic here to define user_type
 
     # Create Trait instance
     trait = Trait(
@@ -407,7 +421,8 @@ def finish_questionare():
         curr_goal=curr_goal,
         usually_quit=usually_quit,
         now_quit=now_quit,
-        believe_ai=believe_ai
+        believe_ai=believe_ai,
+        user_type=user_type # Store the determined user type
     )
     # Save to database
     db.session.add(trait)
@@ -523,10 +538,10 @@ def get_user_type(user_id):
         return jsonify({'message': 'Trait not found'}), 404
 
     weight = None
-    freq = 7
+    freq = None # Initialize freq
     if trait.curr_goal and isinstance(trait.curr_goal, dict):
         weight = trait.curr_goal.get('weight')
-        freq = trait.curr_goal.get('freq')
+        freq = trait.curr_goal.get('freq') # Retrieve freq
 
     return jsonify({
         'user_type': trait.user_type,
@@ -534,51 +549,6 @@ def get_user_type(user_id):
         'freq': freq
     }), 200
     
-# analysis
-@app.route('/analysis/post', methods=['POST'])
-def analysis_post():
-    data = request.get_json()
-
-    user_id = data.get('user_id')
-    if not user_id:
-        return jsonify({'error': 'Missing user_id'}), 400
-
-    if Analysis.query.filter_by(user_id=user_id).first():
-        return jsonify({'error': 'Analysis for this user already exists'}), 409
-
-    new_analysis = Analysis(
-        user_id=user_id,
-        user_type=data.get('user_type'),
-        done_week=data.get('done_week'),
-        weight_praise_flag=data.get('weight_praise_flag', False),
-        add_dist_flag=data.get('add_dist_flag', False),
-        weight_praise=data.get('weight_praise'),
-        time=data.get('time', 0),
-        habit_level=data.get('habit_level', 0)
-    )
-
-    db.session.add(new_analysis)
-    db.session.commit()
-
-    return jsonify({'message': 'Analysis created successfully'}), 201
-
-@app.route('/analysis/<int:user_id>', methods=['GET'])
-def get_analysis(user_id):
-    analysis = Analysis.query.filter_by(user_id=user_id).first()
-
-    if not analysis:
-        return jsonify({'error': 'Analysis not found'}), 404
-
-    return jsonify({
-        'user_id': analysis.user_id,
-        'user_type': analysis.user_type,
-        'done_week': analysis.done_week,
-        'weight_praise_flag': analysis.weight_praise_flag,
-        'add_dist_flag': analysis.add_dist_flag,
-        'weight_praise': analysis.weight_praise,
-        'time': analysis.time,
-        'habit_level': analysis.habit_level
-    }), 200
 
 if __name__ == '__main__':
     # Use Power Shell：run_server.ps1

@@ -33,7 +33,7 @@ class _RunPageState extends State<RunPage> with SingleTickerProviderStateMixin {
   final List<Duration> _splits = [];
   Duration _lastSplitElapsed = Duration.zero;
   final List<double> _recentPaces = [];
-  final int _paceCheckPeriod = 10;
+  final int _paceCheckPeriod = 5;
   final AudioPlayer _audioPlayer = AudioPlayer();
   double _progress = 0.0;
 

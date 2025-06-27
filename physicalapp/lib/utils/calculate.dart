@@ -1,5 +1,4 @@
-double average(Iterable<num> values) {
+double average(List<double> values) {
   if (values.isEmpty) return 0.0;
-  final sum = values.reduce((a, b) => a + b);
-  return sum / values.length;
+  return values.reduce((double a, double b) => a + b) / values.length;
 }

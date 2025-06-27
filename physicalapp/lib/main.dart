@@ -84,10 +84,12 @@ class _MainPageState extends State<MainPage> {
   void _onItemTapped(int index) {
     if (index == 0) {
       Navigator.pushNamed(context, '/analysis');
-    } else if (index == 1) {
-      setState(() {
-        _selectedIndex = 1;
-      });
+    } else if ( index== 1) {
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/main',
+        (route) => false,
+      );
     } else if (index == 2) {
       Navigator.push(
         context,
