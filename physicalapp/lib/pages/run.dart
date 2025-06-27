@@ -102,6 +102,10 @@ class _RunPageState extends State<RunPage> with SingleTickerProviderStateMixin {
         if(_pace > 0){
           _recentPaces.add(_pace);
 
+          print(_pace);
+          print(_recentPaces);
+          print('avg: ${average(_recentPaces)}');
+
           if (_recentPaces.length > _paceCheckPeriod) {
             _recentPaces.removeAt(0);
 
