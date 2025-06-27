@@ -34,12 +34,17 @@ class _RunPageState extends State<RunPage> with SingleTickerProviderStateMixin {
   final List<Duration> _splits = [];
   Duration _lastSplitElapsed = Duration.zero;
   final List<double> _recentPaces = [];
-  final int _paceCheckPeriod = 5 * 10;
+  final int _paceCheckPeriod = 10;
   final AudioPlayer _audioPlayer = AudioPlayer();
   double _progress = 0.0;
-  final random = Random();
+  final random = Random(1);
 
-  double ACCELERATION_RATE = 25.0; // (10x)
+  double ACCELERATION_RATE = 50.0; // (5x)
+  double rate = 300; // 5'00"
+
+  bool already_slower = false;
+  bool already_faster = false;
+  bool first_demo = false;
 
   @override
   void initState() {
@@ -62,19 +67,27 @@ class _RunPageState extends State<RunPage> with SingleTickerProviderStateMixin {
       }
     }
 
+    // first demo or second demo
+    if(widget.goalDistance == 5){
+      first_demo = true;
+      print('First Demo');
+    }
+
     _activeStartTime = DateTime.now();
     _isPaused = false;
-
-    _timer = Timer.periodic(const Duration(milliseconds: 100), (_) {
+    
+    _timer = Timer.periodic(const Duration(milliseconds: 200), (_) {
       if (!_isPaused && _activeStartTime != null) {
-        final distance = (2 + random.nextDouble() * 2) * ACCELERATION_RATE; // 2~4 m/s
+        _pace = rate + random.nextDouble() * 60;
+
+        final distance = (1000 / _pace) * ACCELERATION_RATE;
 
         _totalDistance += distance;
         _distanceSinceLastSplit += distance;
 
         if (_distanceSinceLastSplit >= 1000.0) {
           final currentElapsed = _activeDuration + 
-            (_activeStartTime == null ? Duration.zero : DateTime.now().difference(_activeStartTime!)) * 10 * ACCELERATION_RATE;
+            (_activeStartTime == null ? Duration.zero : DateTime.now().difference(_activeStartTime!)) * 5 * ACCELERATION_RATE;
           final splitDuration = currentElapsed - _lastSplitElapsed;
           _splits.add(splitDuration);
 
@@ -82,22 +95,25 @@ class _RunPageState extends State<RunPage> with SingleTickerProviderStateMixin {
           _distanceSinceLastSplit = 0.0;
         }
 
-        _pace = 240 + random.nextDouble() * 120; // 4'00"~6'00"
-        if(_pace > 0){
+        if(_pace > 0 && first_demo){
           _recentPaces.add(_pace);
 
           if (_recentPaces.length > _paceCheckPeriod) {
             _recentPaces.removeAt(0);
 
-            if(average(_recentPaces) > (widget.goalPace + 15)){
+            if(average(_recentPaces) > (widget.goalPace + 15) && !already_faster){
               print('Alert: Too slow!');
               _audioPlayer.play(AssetSource('audio/faster.mp3'));
               _recentPaces.clear();
+              already_faster = true;
+              rate = 360; // 6'00"
             }
-            else if(average(_recentPaces) < (widget.goalPace - 15)){
+            else if(average(_recentPaces) < (widget.goalPace - 15) && !already_slower){
               print('Alert: Too fast!');
               _audioPlayer.play(AssetSource('audio/slower.mp3'));
               _recentPaces.clear();
+              already_slower = true;
+              rate = 420; // 7'00"
             }
           }
         }
@@ -172,8 +188,8 @@ class _RunPageState extends State<RunPage> with SingleTickerProviderStateMixin {
       'distance_km': _totalDistance / 1000,
       'end_latitude': 0.0,
       'end_longitude': 0.0,
-      'average_pace_seconds_per_km': _totalDistance > 0 ? ((_activeDuration.inSeconds * 10 * ACCELERATION_RATE) / (_totalDistance / 1000)).round() : 0,
-      'split_paces': _splits.map((d) => d.inSeconds - 30).toList(),
+      'average_pace_seconds_per_km': _totalDistance > 0 ? ((_activeDuration.inSeconds * 5 * ACCELERATION_RATE) / (_totalDistance / 1000) + 40).round() : 0,
+      'split_paces': _splits.map((d) => d.inSeconds).toList(),
       'goal_state': check_goal(),
       'goal_dist': widget.goalDistance,
       'goal_pace':  widget.goalPace.toInt()
@@ -205,7 +221,7 @@ class _RunPageState extends State<RunPage> with SingleTickerProviderStateMixin {
 
   Duration get totalRunTime {
     return (_activeDuration +
-        (_activeStartTime == null ? Duration.zero : DateTime.now().difference(_activeStartTime!))) * ACCELERATION_RATE;
+        (_activeStartTime == null ? Duration.zero : DateTime.now().difference(_activeStartTime!))) * ACCELERATION_RATE * 5;
   }
 
   @override

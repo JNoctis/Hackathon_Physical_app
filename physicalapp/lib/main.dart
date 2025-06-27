@@ -68,25 +68,30 @@ class _MainPageState extends State<MainPage> {
   Future<void> getGoal() async {
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getInt('user_id');
-    final response = await http.get(
-      Uri.parse('${dotenv.env['BASE_URL']}/goal/${userId}'),
-    );
+    final demo = prefs.getInt('demo');
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      
-      // check questionare
-      if (data['goal_dist'] < 0) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          Navigator.pushReplacementNamed(context, '/instruction');
-        });
-      }
-      else{
-        setState(() {
-          curr_goal_dist = data['goal_dist'];
-          curr_goal_pace = data['goal_pace'];
-        });
-      }
+    if(demo == 1){
+      print("First Demo");
+      setState(() {
+        curr_goal_dist = 5.0;
+        curr_goal_pace = 390;
+      });
+      await prefs.setInt('demo', 2);
+    }
+    else if(demo == 2){
+      print("Second Demo");
+      setState(() {
+        curr_goal_dist = 6.0;
+        curr_goal_pace = 390;
+      });
+      await prefs.setInt('demo', 3);
+    }
+    else{
+      print("Third Demo");
+      setState(() {
+        curr_goal_dist = 5.5;
+        curr_goal_pace = 420;
+      });
     }
   }
 
