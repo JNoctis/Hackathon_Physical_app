@@ -120,7 +120,7 @@ def add_activity():
 
         # update goal
         if data['distance_km'] != 0 and data['average_pace_seconds_per_km'] != 0:
-            update_trait_after_run(user_id)
+            update_trait_after_run(user_id, data.get('goal_dist'), data.get('goal_pace'))
 
         return jsonify({'message': 'Activity added successfully', 'activity_id': new_activity.id}), 201
     except ValueError:
@@ -404,15 +404,12 @@ def finish_questionare():
     return jsonify({'message': 'Trait created successfully'}), 201
 
 
-def update_trait_after_run(user_id):
+def update_trait_after_run(user_id, curr_goal_dist, curr_goal_pace):
     trait = Trait.query.filter_by(user_id=user_id).first()
     if not trait or not trait.curr_goal:
         return
 
-    original_goal = copy.deepcopy(trait.curr_goal) # Use deepcopy to keep original for comparison
     new_goal = trait.curr_goal
-    curr_goal_pace = new_goal['pace']
-    curr_goal_dist = new_goal['dist']
 
     long_goal_pace = trait.long_goal['pace']
     long_goal_dist = trait.long_goal['dist']
@@ -475,7 +472,7 @@ def update_trait_after_run(user_id):
         # Decrease distance by 0.5km for each consecutive failure after the first
         new_goal['dist'] = max(curr_goal_dist - (consecutive_failures_dist - 1) * 0.5, 1.0) # Minimum 1km
 
-    print(f"Original Goal: {original_goal}, New Goal: {new_goal}")
+    print(f"Original Goal: {curr_goal_dist}km {curr_goal_pace}, New Goal: {new_goal}")
     db.session.commit()
 
 # get today goal
