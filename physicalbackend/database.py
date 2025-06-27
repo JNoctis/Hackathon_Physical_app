@@ -94,23 +94,3 @@ class Trait(db.Model):
     now_quit = db.Column(db.Boolean, default=False)
     believe_ai = db.Column(db.Boolean, default=True)
   
-class Analysis(db.Model):  
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, unique=True)
-    user_type = db.Column(db.String, nullable=True)
-    done_week = db.Column(JSON, nullable=True)
-    # done_week = {
-    #   "round_week": 3,
-    #   "dist_week": 5.0, 
-    #   "avg_pace_week": 300,
-    #   "complete_week": 0.5
-    # }
-    weight_praise_flag = db.Column(db.Boolean, default=False)  
-    add_dist_flag = db.Column(db.Boolean, default=False)      
-    weight_praise = db.Column(JSON, nullable=True)
-    # done_week = {
-    #   "add_dist": 0.5,
-    #   "exp_weight_drop": 1
-    # }
-    time = db.Column(db.Integer, default=0)
-    habit_level = db.Column(db.Integer, default=0)  

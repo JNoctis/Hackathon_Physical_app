@@ -11,7 +11,7 @@ import re # Import re for regular expressions to parse questionnaire answers
 from datetime import datetime, timedelta
 
 # Import db and models from database.py
-from database import db, User, Activity, init_db_command, Trait, Analysis
+from database import db, User, Activity, init_db_command, Trait
 from flask_cors import CORS
 
 # Constants for updating performance
@@ -534,51 +534,6 @@ def get_user_type(user_id):
         'freq': freq
     }), 200
     
-# analysis
-@app.route('/analysis/post', methods=['POST'])
-def analysis_post():
-    data = request.get_json()
-
-    user_id = data.get('user_id')
-    if not user_id:
-        return jsonify({'error': 'Missing user_id'}), 400
-
-    if Analysis.query.filter_by(user_id=user_id).first():
-        return jsonify({'error': 'Analysis for this user already exists'}), 409
-
-    new_analysis = Analysis(
-        user_id=user_id,
-        user_type=data.get('user_type'),
-        done_week=data.get('done_week'),
-        weight_praise_flag=data.get('weight_praise_flag', False),
-        add_dist_flag=data.get('add_dist_flag', False),
-        weight_praise=data.get('weight_praise'),
-        time=data.get('time', 0),
-        habit_level=data.get('habit_level', 0)
-    )
-
-    db.session.add(new_analysis)
-    db.session.commit()
-
-    return jsonify({'message': 'Analysis created successfully'}), 201
-
-@app.route('/analysis/<int:user_id>', methods=['GET'])
-def get_analysis(user_id):
-    analysis = Analysis.query.filter_by(user_id=user_id).first()
-
-    if not analysis:
-        return jsonify({'error': 'Analysis not found'}), 404
-
-    return jsonify({
-        'user_id': analysis.user_id,
-        'user_type': analysis.user_type,
-        'done_week': analysis.done_week,
-        'weight_praise_flag': analysis.weight_praise_flag,
-        'add_dist_flag': analysis.add_dist_flag,
-        'weight_praise': analysis.weight_praise,
-        'time': analysis.time,
-        'habit_level': analysis.habit_level
-    }), 200
 
 if __name__ == '__main__':
     # Use Power Shell：run_server.ps1
