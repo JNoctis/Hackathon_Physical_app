@@ -231,6 +231,7 @@ class _ClassifyState extends State<ClassifyPage> {
               ),
               SizedBox(height: 16),
               ElevatedButton(onPressed: restart, child: Text('Restart')),
+              SizedBox(height: 30),
               ElevatedButton(
                 onPressed: () async {
                   final prefs = await SharedPreferences.getInstance();
@@ -273,7 +274,7 @@ class _ClassifyState extends State<ClassifyPage> {
     final options = questionData['options'] as List<String>;
 
     return Scaffold(
-      appBar: AppBar(title: Text('Conditional Questionnaire')),
+      appBar: AppBar(title: Text('Questionnaire')),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -343,7 +344,7 @@ class _ClassifyState extends State<ClassifyPage> {
                       onPressed: currentQuestionIndex > 0 ? goToPrevious : null,
                       child: Text('Previous'),
                     ),
-                    SizedBox(width: 20),
+                    SizedBox(width: 50),
                     ElevatedButton(
                       onPressed: currentQuestionIndex < questionHistory.length - 1 ? goToNext : null,
                       child: Text('Next'),
