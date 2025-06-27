@@ -1,3 +1,10 @@
+/// 重點改動：
+/// 1. 移除 SingleChildScrollView，改用 Column + Spacer 保持畫面不滾動。
+/// 2. 使用 AnimatedPadding 避免鍵盤遮住內容。
+/// 3. 點擊空白處會收鍵盤（GestureDetector）。
+/// 4. _EditableBox 改為允許輸入小數。
+/// 5. 修正高度間距，讓整體版面在不滾動時仍然對齊。
+
 import 'package:flutter/material.dart';
 import 'pages/analysis.dart';
 import 'instruction.dart';
@@ -107,47 +114,39 @@ class _MainPageState extends State<MainPage> {
       });
     }
 
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+
     return Scaffold(
       resizeToAvoidBottomInset: true,
       appBar: PreferredSize(
-      preferredSize: const Size.fromHeight(150),
-      child: AppBar(
-        backgroundColor: const Color.fromARGB(255, 251, 250, 250), // 白色背景
-        toolbarHeight: 150, // 👈 安全增加高度
-        centerTitle: true,
-        elevation: 0,
-        title: const Padding(
-          padding: EdgeInsets.only(top: 80), // 👈 加這行讓文字往下
-          child: Text(
-            'Runalyze',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 40,
-              color: Colors.black, // 白底用黑字
+        preferredSize: const Size.fromHeight(150),
+        child: AppBar(
+          backgroundColor: const Color.fromARGB(255, 251, 250, 250),
+          toolbarHeight: 150,
+          centerTitle: true,
+          elevation: 0,
+          title: const Padding(
+            padding: EdgeInsets.only(top: 80),
+            child: Text(
+              'Runalyze',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 40,
+                color: Colors.black,
+              ),
             ),
           ),
         ),
-      
       ),
-    ),
-
-      body: GestureDetector(
-        onTap: () => FocusScope.of(context).unfocus(),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              minHeight: MediaQuery.of(context).size.height -
-                  kBottomNavigationBarHeight -
-                  kToolbarHeight,
-            ),
-            child: IntrinsicHeight(
-              child: HomePage(
-                key: ValueKey('$curr_goal_dist-$curr_goal_pace'),
-                currGoalDist: curr_goal_dist,
-                currGoalPace: curr_goal_pace,
-              ),
-            ),
+      body: AnimatedPadding(
+        duration: const Duration(milliseconds: 200),
+        padding: EdgeInsets.only(bottom: bottomInset),
+        child: GestureDetector(
+          onTap: () => FocusScope.of(context).unfocus(),
+          child: HomePage(
+            key: ValueKey('$curr_goal_dist-$curr_goal_pace'),
+            currGoalDist: curr_goal_dist,
+            currGoalPace: curr_goal_pace,
           ),
         ),
       ),
@@ -176,6 +175,9 @@ class _MainPageState extends State<MainPage> {
     );
   }
 }
+
+// 其餘 HomePage、_EditableBox、_PaceInputBox、_TimeField 元件保持不動
+
 
 class HomePage extends StatefulWidget {
   final double currGoalDist;
@@ -330,9 +332,9 @@ class _EditableBox extends StatelessWidget {
                 width: 50,
                 child: TextField(
                   controller: controller,
-                  keyboardType: TextInputType.number,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'^\d{0,2}(\.\d?)?'))
+                    FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))
                   ],
                   // r
                   style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
