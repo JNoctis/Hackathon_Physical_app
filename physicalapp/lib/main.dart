@@ -1,10 +1,3 @@
-/// 重點改動：
-/// 1. 移除 SingleChildScrollView，改用 Column + Spacer 保持畫面不滾動。
-/// 2. 使用 AnimatedPadding 避免鍵盤遮住內容。
-/// 3. 點擊空白處會收鍵盤（GestureDetector）。
-/// 4. _EditableBox 改為允許輸入小數。
-/// 5. 修正高度間距，讓整體版面在不滾動時仍然對齊。
-
 import 'package:flutter/material.dart';
 import 'pages/analysis.dart';
 import 'instruction.dart';
@@ -114,39 +107,47 @@ class _MainPageState extends State<MainPage> {
       });
     }
 
-    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-
     return Scaffold(
       resizeToAvoidBottomInset: true,
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(150),
-        child: AppBar(
-          backgroundColor: const Color.fromARGB(255, 251, 250, 250),
-          toolbarHeight: 150,
-          centerTitle: true,
-          elevation: 0,
-          title: const Padding(
-            padding: EdgeInsets.only(top: 80),
-            child: Text(
-              'Runalyze',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 40,
-                color: Colors.black,
-              ),
+      preferredSize: const Size.fromHeight(100),
+      child: AppBar(
+        backgroundColor: const Color.fromARGB(255, 251, 250, 250), // 白色背景
+        toolbarHeight: 120, // 👈 安全增加高度
+        centerTitle: true,
+        elevation: 0,
+        title: const Padding(
+          padding: EdgeInsets.only(top: 60), // 👈 加這行讓文字往下
+          child: Text(
+            'Runalyze',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 35,
+              color: Colors.black, // 白底用黑字
             ),
           ),
         ),
+      
       ),
-      body: AnimatedPadding(
-        duration: const Duration(milliseconds: 200),
-        padding: EdgeInsets.only(bottom: bottomInset),
-        child: GestureDetector(
-          onTap: () => FocusScope.of(context).unfocus(),
-          child: HomePage(
-            key: ValueKey('$curr_goal_dist-$curr_goal_pace'),
-            currGoalDist: curr_goal_dist,
-            currGoalPace: curr_goal_pace,
+    ),
+
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: MediaQuery.of(context).size.height -
+                  kBottomNavigationBarHeight -
+                  kToolbarHeight,
+            ),
+            child: IntrinsicHeight(
+              child: HomePage(
+                key: ValueKey('$curr_goal_dist-$curr_goal_pace'),
+                currGoalDist: curr_goal_dist,
+                currGoalPace: curr_goal_pace,
+              ),
+            ),
           ),
         ),
       ),
@@ -175,9 +176,6 @@ class _MainPageState extends State<MainPage> {
     );
   }
 }
-
-// 其餘 HomePage、_EditableBox、_PaceInputBox、_TimeField 元件保持不動
-
 
 class HomePage extends StatefulWidget {
   final double currGoalDist;
@@ -218,7 +216,7 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       width: double.infinity,
       color: const Color(0xFFF7FAFC),
       child: Column(
@@ -239,7 +237,7 @@ class _HomePageState extends State<HomePage> {
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          // const SizedBox(height: 30),
           const Text(
             
             'This goal is recommended based on your previous pace and distance to improve endurance.',
@@ -247,7 +245,8 @@ class _HomePageState extends State<HomePage> {
             style: TextStyle(fontSize: 16, color: Colors.black87),
 
           ),
-          const Spacer(),
+          const SizedBox(height: 30),
+          // const Spacer(),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.orange,
@@ -283,7 +282,7 @@ class _HomePageState extends State<HomePage> {
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
           ),
-          const SizedBox(height: 50),
+          // const SizedBox(height: 50),
         ],
       ),
     );
