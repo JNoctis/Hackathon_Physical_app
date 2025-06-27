@@ -110,7 +110,7 @@ class _MainPageState extends State<MainPage> {
     return Scaffold(
       resizeToAvoidBottomInset: true,
       appBar: PreferredSize(
-      preferredSize: const Size.fromHeight(100),
+      preferredSize: const Size.fromHeight(120),
       child: AppBar(
         backgroundColor: const Color.fromARGB(255, 251, 250, 250), // 白色背景
         toolbarHeight: 120, // 👈 安全增加高度
@@ -237,7 +237,7 @@ class _HomePageState extends State<HomePage> {
               ),
             ],
           ),
-          // const SizedBox(height: 30),
+          const SizedBox(height: 20),
           const Text(
             
             'This goal is recommended based on your previous pace and distance to improve endurance.',
@@ -245,7 +245,7 @@ class _HomePageState extends State<HomePage> {
             style: TextStyle(fontSize: 16, color: Colors.black87),
 
           ),
-          const SizedBox(height: 30),
+          const SizedBox(height: 40),
           // const Spacer(),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -333,7 +333,7 @@ class _EditableBox extends StatelessWidget {
                   controller: controller,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))
+                    FilteringTextInputFormatter.allow(RegExp(r'^\d{0,2}(\.\d?)?$')),
                   ],
                   // r
                   style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),

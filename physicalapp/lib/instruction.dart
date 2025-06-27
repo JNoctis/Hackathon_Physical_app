@@ -226,7 +226,7 @@ class _ClassifyState extends State<ClassifyPage> {
                 child: Text(
                   'You have completed all the questions!',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 24, color: Colors.white),
+                  style: TextStyle(fontSize: 24, color: Colors.black),
                 ),
               ),
               SizedBox(height: 16),
@@ -284,7 +284,7 @@ class _ClassifyState extends State<ClassifyPage> {
                 child: Text(
                   question,
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: const Color.fromARGB(255, 255, 254, 254)),
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: const Color.fromARGB(255, 4, 0, 0)),
                 ),
               ),
               Wrap(
