@@ -108,6 +108,7 @@ class _MainPageState extends State<MainPage> {
     }
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: PreferredSize(
       preferredSize: const Size.fromHeight(150),
       child: AppBar(
@@ -129,10 +130,26 @@ class _MainPageState extends State<MainPage> {
       
       ),
     ),
-      body: HomePage(
-        key: ValueKey('$curr_goal_dist-$curr_goal_pace'), // ✅ 確保更新
-        currGoalDist: curr_goal_dist,
-        currGoalPace: curr_goal_pace,
+
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: MediaQuery.of(context).size.height -
+                  kBottomNavigationBarHeight -
+                  kToolbarHeight,
+            ),
+            child: IntrinsicHeight(
+              child: HomePage(
+                key: ValueKey('$curr_goal_dist-$curr_goal_pace'),
+                currGoalDist: curr_goal_dist,
+                currGoalPace: curr_goal_pace,
+              ),
+            ),
+          ),
+        ),
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
@@ -318,7 +335,7 @@ class _EditableBox extends StatelessWidget {
                     FilteringTextInputFormatter.allow(RegExp(r'^\d{0,2}(\.\d?)?'))
                   ],
                   // r
-                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   decoration: const InputDecoration(
                     border: InputBorder.none,
                     isDense: true,
@@ -378,9 +395,9 @@ class _PaceInputBox extends StatelessWidget {
             children: [
               
               _TimeField1(controller: minuteController, maxValue: 9 ),
-              const Text("'", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+              const Text("'", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
               _TimeField2(controller: secondController, maxValue: 59),
-              const Text('"', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+              const Text('"', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             ],
             
           ),
@@ -419,7 +436,7 @@ class _TimeField1 extends StatelessWidget {
           }
         },
         textAlign: TextAlign.right,
-        style: const TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
+        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         decoration: const InputDecoration(
           border: InputBorder.none,
           isDense: true,
@@ -459,7 +476,7 @@ class _TimeField2 extends StatelessWidget {
           }
         },
         textAlign: TextAlign.right,
-        style: const TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
+        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         decoration: const InputDecoration(
           border: InputBorder.none,
           isDense: true,
@@ -504,7 +521,7 @@ class _InfoBox extends StatelessWidget {
           Text(
             value,
             style: const TextStyle(
-              fontSize: 24,
+              fontSize: 20,
               fontWeight: FontWeight.bold,
               color: Colors.black87,
             ),
