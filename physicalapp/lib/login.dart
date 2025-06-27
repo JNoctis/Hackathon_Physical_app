@@ -49,8 +49,7 @@ class _LoginPageState extends State<LoginPage> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => MainPage(),
-        ),
+          builder: (context) => MainPage()),
       );
     } else {
       // 登入失敗
@@ -76,6 +75,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 32, 32, 32),
       body: Center(
