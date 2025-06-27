@@ -97,7 +97,7 @@ class _RunPageState extends State<RunPage> with SingleTickerProviderStateMixin {
           }
         }
         _lastPosition = position;
-        _pace = position.speed == 0 ? -1 : 1000 / position.speed;
+        _pace = position.speed == 0 ? -1 : (1000 / position.speed);
 
         if(_pace > 0){
           _recentPaces.add(_pace);
@@ -105,14 +105,14 @@ class _RunPageState extends State<RunPage> with SingleTickerProviderStateMixin {
           if (_recentPaces.length > _paceCheckPeriod) {
             _recentPaces.removeAt(0);
 
-            if(average(_recentPaces) > widget.goalPace + 15){
-              print('Alert: Too fast!');
-              _audioPlayer.play(AssetSource('audio/slower.mp3'));
-              _recentPaces.clear();
-            }
-            else if(average(_recentPaces) < widget.goalPace - 15){
+            if(average(_recentPaces) > (widget.goalPace + 15)){
               print('Alert: Too slow!');
               _audioPlayer.play(AssetSource('audio/faster.mp3'));
+              _recentPaces.clear();
+            }
+            else if(average(_recentPaces) < (widget.goalPace - 15)){
+              print('Alert: Too fast!');
+              _audioPlayer.play(AssetSource('audio/slower.mp3'));
               _recentPaces.clear();
             }
           }
@@ -138,7 +138,6 @@ class _RunPageState extends State<RunPage> with SingleTickerProviderStateMixin {
           setState(() {});
         });
       }
-      _audioPlayer.play(AssetSource('audio/faster.mp3'));
       _isPaused = !_isPaused;
     });
   }
@@ -162,7 +161,7 @@ class _RunPageState extends State<RunPage> with SingleTickerProviderStateMixin {
   }
 
   String check_goal(){
-    if(_totalDistance < widget.goalDistance){
+    if((_totalDistance / 1000) < widget.goalDistance){
       return "missed";
     }
     int average_pace = _totalDistance > 0 ? (_activeDuration.inSeconds / (_totalDistance / 1000)).round() : 0;
