@@ -8,6 +8,7 @@ from sqlalchemy import desc
 from flask_sqlalchemy import SQLAlchemy
 import copy
 import re # Import re for regular expressions to parse questionnaire answers
+from datetime import datetime, timedelta
 
 # Import db and models from database.py
 from database import db, User, Activity, init_db_command, Trait, Analysis
