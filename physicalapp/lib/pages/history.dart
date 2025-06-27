@@ -233,8 +233,9 @@ class _HistoryPageState extends State<HistoryPage> {
     final DateTime today = DateTime.now();
 
     return Scaffold(
+      backgroundColor: const Color.fromARGB(255, 251, 250, 250),
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        backgroundColor: const Color.fromARGB(255, 251, 250, 250),
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -406,7 +407,7 @@ class _HistoryPageState extends State<HistoryPage> {
         type: BottomNavigationBarType.fixed,
         selectedItemColor: const Color.fromRGBO(124, 77, 255, 1),
         unselectedItemColor: const Color.fromARGB(255, 3, 3, 3),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        backgroundColor: const Color.fromARGB(255, 255, 255, 255),
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.info),
