@@ -343,7 +343,7 @@ class _ClassifyState extends State<ClassifyPage> {
                       onPressed: currentQuestionIndex > 0 ? goToPrevious : null,
                       child: Text('Previous'),
                     ),
-                    SizedBox(width: 20),
+                    SizedBox(width: 50),
                     ElevatedButton(
                       onPressed: currentQuestionIndex < questionHistory.length - 1 ? goToNext : null,
                       child: Text('Next'),
