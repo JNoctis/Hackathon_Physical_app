@@ -1,5 +1,7 @@
 # Runalyze
-<img src="https://github.com/user-attachments/assets/ca0eb685-653d-424f-a4ac-ca5bea5c049f" alt="runalyze" width="300">
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/ca0eb685-653d-424f-a4ac-ca5bea5c049f" alt="runalyze" width="300">
+</p>
 
 This project is a running performance tracking application, consisting of a Flutter-based mobile frontend and a Flask-based Python backend. It allows users to record their running activities, view historical data, and track progress towards their fitness goals.
 
