@@ -5,6 +5,8 @@ This project is a running performance tracking application, consisting of a Flut
 
 Visualize Readme Website : [Runalyze README](https://runalyze.neocities.org/) :link:
 
+@sapt36
+
 ## Table of Contents
 
 - [Features](https://www.notion.so/21f2ac42b1da80fa81e3cace044a23aa?pvs=21) 
@@ -216,7 +218,16 @@ Ensure your virtual environment is activated and `FLASK_APP` is set, then run:
     ```
     
     The app will launch on your connected device or emulator.
-    
+
+## Contributors ✨
+
+| Member | Role | Responsibilities |
+| --- | --- | --- |
+| **[sapt36](https://github.com/sapt36)** | Developer / Backend & History | History Record Frontend, Backend Integration, Backend Design, Backend Logic Development, Setup & Testing, Database Construction, Readme |
+| **[Sankonsky](https://github.com/Sankonsky)** | Developer / Running & GPS | GPS Connection, Main Running Function Backend, Acceleration Test Function, Frontend Integration, Frontend Display Debugging |
+| **[JNoctis](https://github.com/JNoctis)** | Developer / Frontend Design & Integration | Main Page Frontend Design, Integration and Aesthetic Refinement |
+| **[WuKobeWu](https://github.com/WuKobeWu)** | Developer / Analysis & App Packaging | Analysis Frontend, Backend Integration, New Database Fields, Backend Design, iOS App Packaging, Demo App |
+| **Ashley** | Project Integration & Requirements Management | Requirement Elicitation, Presentation Design, Video Editing, Full App Architecture, Market Research, Video/Audio Recording, Real-device Testing (Non-coding) |
 
 ## Database Schema
 
