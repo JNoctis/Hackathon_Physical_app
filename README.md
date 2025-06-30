@@ -227,7 +227,7 @@ Ensure your virtual environment is activated and `FLASK_APP` is set, then run:
 | **[Sankonsky](https://github.com/Sankonsky)** | Developer / Running & GPS | GPS Connection, Main Running Function Backend, Acceleration Test Function, Frontend Integration, Frontend Display Debugging |
 | **[JNoctis](https://github.com/JNoctis)** | Developer / Frontend Design & Integration | Main Page Frontend Design, Integration and Aesthetic Refinement |
 | **[WuKobeWu](https://github.com/WuKobeWu)** | Developer / Analysis & App Packaging | Analysis Frontend, Backend Integration, New Database Fields, Backend Design, iOS App Packaging, Demo App |
-| **Ashley** | Project Integration & Requirements Management | Requirement Elicitation, Presentation Design, Video Editing, Full App Architecture, Market Research, Video/Audio Recording, Real-device Testing (Non-coding) |
+| **[Ashley](https://www.linkedin.com/in/%E5%93%81%E5%A6%A4-%E9%99%B3-689898308/)** | Project Integration & Requirements Management | Requirement Elicitation, Presentation Design, Video Editing, Full App Architecture, Market Research, Video/Audio Recording, Real-device Testing (Non-coding) |
 
 ## Database Schema
 
